@@ -1,3 +1,13 @@
+function login() {
+    FB.login(function(response) {
+        if (response.authResponse) {
+            // connected
+        } else {
+            // cancelled
+        }
+    });
+}
+
 window.fbAsyncInit = function() {
   console.log("FB:",FB);
   FB.init({
@@ -7,7 +17,20 @@ window.fbAsyncInit = function() {
     cookie     : true, // enable cookies to allow the server to access the session
     xfbml      : true  // parse XFBML
   });
+
+  FB.getLoginStatus(function(response) {
+    if (response.status === 'connected') {
+      // connected
+    } else if (response.status === 'not_authorized') {
+      // not_authorized
+      login();
+    } else {
+      // not_logged_in
+      login();
+    }
+  });
 };
+
 // Load the SDK Asynchronously
 (function(d){
   var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
