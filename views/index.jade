@@ -3,5 +3,12 @@ extends layout
 block content
   h1= title
   div#fb-root
-  p Welcome to #{title}
+  p Here are your birthday posts...
+  p#summary
+  input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
+  table#birthday-posts
+  input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
+
+block late-scripts
   script(src='javascripts/main.js')
+  script(src='https://raw.github.com/janl/mustache.js/master/mustache.js')
