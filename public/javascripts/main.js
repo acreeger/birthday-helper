@@ -2,7 +2,44 @@ var pageReady = false;
 var currentFacebookId = null;
 
 var finalPostList = null;
-var finalPostMap = {};
+var disabledLikes = initLocalStorageMap("disabledLikes");
+var disabledComments = initLocalStorageMap("disabledComments");
+
+function initLocalStorageMap(key) {
+  var itemFromStorage = window.localStorage.getItem(key);
+  if (itemFromStorage) {
+    return JSON.parse(itemFromStorage)
+  } else {
+    return {}
+  }
+}
+
+function isLikeDisabledForPost(postId) {
+  return isActionDisabledForPost(disabledLikes, postId);
+}
+
+function isCommentDisabledForPost(postId) {
+  return isActionDisabledForPost(disabledComments, postId);
+}
+
+function isActionDisabledForPost(actionMap, postId) {
+  if (actionMap[postId]) return true;
+  return false;
+}
+
+function updateDisabledLikes(postId, value) {
+  disabledLikes[postId] = value;
+  updateLocalStorageMap('disabledLikes', disabledLikes);
+}
+
+function updateDisabledComments(postId, value) {
+  disabledComments[postId] = value;
+  updateLocalStorageMap('disabledComments', disabledComments);
+}
+
+function updateLocalStorageMap(key, map) {
+  window.localStorage.setItem(key, JSON.stringify(map));
+}
 
 function login(callback) {
     FB.login(function(response) {
@@ -21,8 +58,8 @@ var template = '\
   <td><strong>{{from}}</strong><br>{{message}}\
       {{#needsSomething}}<br>\
       <ul>\
-        {{#needsLike}}<li>Going to like it! (<a href="#" class="disableLike">x</a>)</li>{{/needsLike}}\
-        {{#needsComment}}<li>Going to post \'{{comment}}\' (<a href="#" class="disableComment">x</a>)</li>{{/needsComment}}\
+        {{#needsLike}}<li class="likeAction">Going to like it! (<a href="#" class="disableLike">x</a>)</li>{{/needsLike}}\
+        {{#needsComment}}<li class="commentAction">Going to post \'{{comment}}\' (<a href="#" class="disableComment">x</a>)</li>{{/needsComment}}\
       <ul>\
       {{/needsSomething}}\
       </td>\
@@ -80,12 +117,10 @@ function augmentPostsWithOtherInfo(posts) {
   $.each(posts, function(i, post) {
     var needsLike = !isFBUserInCommentsOrLikesInfo(post.likes, currentFacebookId);
     var needsComment = !isFBUserInCommentsOrLikesInfo(post.comments, currentFacebookId);
-    var needsSomething = needsComment || needsLike;
 
     var data = {
       needsLike : needsLike,
-      needsComment : needsComment,
-      needsSomething : needsSomething,
+      needsComment : needsComment
     }
     post['tbh-data'] = data;
     // console.log("Message",post.message,"needsLike", needsLike, "needsComment",needsComment);
@@ -120,7 +155,7 @@ function loginCompleted(response) {
         'image-url': "http://graph.facebook.com/" + post.from.id + "/picture",
         from : post.from.name,
         message : post.message,
-        needsSomething : tbhData.needsSomething,
+        needsSomething : tbhData.needsLike || tbhData.needsComment,
         needsLike : tbhData.needsLike,
         needsComment : tbhData.needsComment,
         comment : comment,
@@ -129,27 +164,39 @@ function loginCompleted(response) {
 
       var postRow = Mustache.to_html(template, data);
       var $postRow = $(postRow);
-      if (!tbhData.needsSomething) {
+      if (!data.needsSomething) {
         $postRow.css("opacity",0.3)
+      } else {
+        var markActionAsDisabled = function (actionType) {
+          $postRow.find("." + actionType + "Action").css("opacity",0.3)
+        }
+
+        if (isLikeDisabledForPost(post.id)) {
+          markActionAsDisabled('like');
+        }
+        if (isCommentDisabledForPost(post.id)) {
+          markActionAsDisabled('comment');
+        }
       }
       $postRow.find(".disableLike, .disableComment").data("fbPostId", post.id);
       $postRow.appendTo(container);
     });
-    $(".disableLike").on("click", function(evt) {
+
+    var disableAction = function(evt, getter, setter) {
       evt.preventDefault();
       var postId = $(evt.target).data("fbPostId")
-      var post = finalPostMap[postId];
-      console.log("disableLike.click: Got post",post);
-      post["tbh-data"].needsLike = false;
-      $(evt.target).closest("li").fadeTo(400,0.3)
+      var existingValue = getter(postId);
+      var newValue = !existingValue;
+      setter(postId, newValue)
+      var opacity = newValue ? 0.3 : 1.0
+      $(evt.target).closest("li").fadeTo(400,opacity)        
+    }
+
+    $(".disableLike").on("click", function(evt) {
+      disableAction(evt, isLikeDisabledForPost, updateDisabledLikes);
     });
     $(".disableComment").on("click", function(evt) {
-      evt.preventDefault();
-      var postId = $(evt.target).data("fbPostId")
-      var post = finalPostMap[postId];
-      console.log("disableComment.click: Got post",post);
-      post["tbh-data"].needsComment = false;
-      $(evt.target).closest("li").fadeTo(400,0.3)
+      disableAction(evt, isCommentDisabledForPost, updateDisabledComments);
     });
 
     finalPostList = posts;    
@@ -174,7 +221,6 @@ function getBirthdayPostsOnWall(response, callback) {
           if (log) {console.log("Processing filter:", filter)}
           if (log) {console.log("indexOf:", message.toLowerCase().indexOf(filter))}  
           if (message.toLowerCase().indexOf(filter) > -1) {
-            finalPostMap[post.id] = post
             return true;
           }
         }
@@ -256,9 +302,10 @@ function doCommentsAndLikes() {
   $.each(finalPostList, function(i, post){
     var tbhData = post['tbh-data'];
     var postId = post.id;
-    if (tbhData.needsSomething) {
+
+    if (tbhData.needsComment || tbhData.needsLike) {
       var baseUrl = postId + "/";
-      if (tbhData.needsComment) {
+      if (tbhData.needsComment && !isCommentDisabledForPost(postId)) {
         var comment = tbhData.comment;
         var neededComment = tbhData.needsComment;
         var neededLike = tbhData.needsLike;
@@ -283,7 +330,7 @@ function doCommentsAndLikes() {
           }
         })
       }
-      if (tbhData.needsLike) {
+      if (tbhData.needsLike && !isLikeDisabledForPost(postId)) {
         console.log("About to like post:", post.message)
         var url = baseUrl + "likes"
         //Start callback
