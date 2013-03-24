@@ -3,11 +3,13 @@ extends layout
 block content
   h1= title
   div#fb-root
-  p Here are your birthday posts...
+  p#getting-birthday-posts Fetching your birthday posts now...
+  p.got-birthday-posts Here are your birthday posts...
     span#summary
-  input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
-  table#birthday-posts
-  input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
+  .got-birthday-posts
+    input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
+    table#birthday-posts
+    input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
 
 block late-scripts
   script(src='javascripts/main.js')

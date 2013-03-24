@@ -133,8 +133,11 @@ function loginCompleted(response) {
   getBirthdayPostsOnWall(response, function(posts) {
     augmentPostsWithOtherInfo(posts);
     // console.log("Got posts:",$.map(posts,function(post, i){return post.message}));
-    var summary = "You have " + posts.length + " of them."
-    $("#summary").text(summary);
+    var summary = posts.length > 0 ? "You have " + posts.length + " of them." : "You have none. Come back on your birthday."
+    $("#getting-birthday-posts").fadeOut(function() {
+      $(".got-birthday-posts").fadeIn();
+      $("#summary").text(summary);
+    });    
     if (posts.length > 0) {
       $(".do-comments-and-likes").show();
     }
