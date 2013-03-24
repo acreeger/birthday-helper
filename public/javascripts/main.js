@@ -2,6 +2,7 @@ var pageReady = false;
 var currentFacebookId = null;
 
 var finalPostList = null;
+var finalPostMap = {};
 
 function login(callback) {
     FB.login(function(response) {
@@ -20,8 +21,8 @@ var template = '\
   <td><strong>{{from}}</strong><br>{{message}}\
       {{#needsSomething}}<br>\
       <ul>\
-        {{#needsLike}}<li>Going to like it!</li>{{/needsLike}}\
-        {{#needsComment}}<li>Going to post \'{{comment}}\'</li>{{/needsComment}}\
+        {{#needsLike}}<li>Going to like it! (<a href="#" class="disableLike">x</a>)</li>{{/needsLike}}\
+        {{#needsComment}}<li>Going to post \'{{comment}}\' (<a href="#" class="disableComment">x</a>)</li>{{/needsComment}}\
       <ul>\
       {{/needsSomething}}\
       </td>\
@@ -131,8 +132,26 @@ function loginCompleted(response) {
       if (!tbhData.needsSomething) {
         $postRow.css("opacity",0.3)
       }
+      $postRow.find(".disableLike, .disableComment").data("fbPostId", post.id);
       $postRow.appendTo(container);
     });
+    $(".disableLike").on("click", function(evt) {
+      evt.preventDefault();
+      var postId = $(evt.target).data("fbPostId")
+      var post = finalPostMap[postId];
+      console.log("disableLike.click: Got post",post);
+      post["tbh-data"].needsLike = false;
+      $(evt.target).closest("li").fadeTo(400,0.3)
+    });
+    $(".disableComment").on("click", function(evt) {
+      evt.preventDefault();
+      var postId = $(evt.target).data("fbPostId")
+      var post = finalPostMap[postId];
+      console.log("disableComment.click: Got post",post);
+      post["tbh-data"].needsComment = false;
+      $(evt.target).closest("li").fadeTo(400,0.3)
+    });
+
     finalPostList = posts;    
   });
 }
@@ -140,10 +159,11 @@ function loginCompleted(response) {
 function getBirthdayPostsOnWall(response, callback) {
   //TODO: Get birthday, check for within last 24 hours
   console.log("Getting posts on wall");
-  FB.api('me/feed?limit=130', function(response) {
+  FB.api('me/feed?limit=150', function(response) {
     var posts = response.data;
     var birthdayPosts = $.grep(posts, function(post, i) {
-      if (post.message) {
+      if (post.message && post.to) {
+        // if ()
         var from = post.from.name;
         var log = false;
         var message = post.message;
@@ -154,6 +174,7 @@ function getBirthdayPostsOnWall(response, callback) {
           if (log) {console.log("Processing filter:", filter)}
           if (log) {console.log("indexOf:", message.toLowerCase().indexOf(filter))}  
           if (message.toLowerCase().indexOf(filter) > -1) {
+            finalPostMap[post.id] = post
             return true;
           }
         }
@@ -183,10 +204,13 @@ function hasPermissions(permissions, callback) {
 }
 
 window.fbAsyncInit = function() {
+  var isLocal = window.location.hostname.indexOf('local.birthdayhelper.com')  > -1;
+  console.log("isLocal",isLocal);
+  var appId = isLocal ? '525100497552814' : '495905673807221'
+  var channelUrl = isLocal ? '//local.birthdayhelper.com/channel.html' : '//shrouded-hollows-1864.herokuapp.com/channel.html'
   FB.init({
-    appId      : '525100497552814', // '495905673807221', // App ID
-    // channelUrl : '//shrouded-hollows-1864.herokuapp.com/channel.html', // Channel File
-    channelUrl : '//local.birthdayhelper.com/channel.html', // Channel File
+    appId      : appId,
+    channelUrl : channelUrl,
     status     : true, // check login status
     cookie     : true, // enable cookies to allow the server to access the session
     xfbml      : true  // parse XFBML
@@ -196,7 +220,7 @@ window.fbAsyncInit = function() {
 
   FB.getLoginStatus(function(response) {
     if (response.status === 'connected') {
-      console.log("FB User already logged im. Response:",response);
+      console.log("FB User already logged in. Response:",response);
       hasPermissions(['read_stream','publish_stream'], function(result) {
         if (result) {
           loginCompleted(response);
@@ -234,13 +258,11 @@ function doCommentsAndLikes() {
     var postId = post.id;
     if (tbhData.needsSomething) {
       var baseUrl = postId + "/";
-      // var baseUrl = "708755493_10152682723805494" + "/";
       if (tbhData.needsComment) {
         var comment = tbhData.comment;
         var neededComment = tbhData.needsComment;
         var neededLike = tbhData.needsLike;
         console.log("About to post comment:", comment, "on post",post.message)
-        //Start callback (use GET first!!)
         var url = baseUrl + "comments"
         var data = {message : comment};
         FB.api(url, 'post', data, function(response) {
