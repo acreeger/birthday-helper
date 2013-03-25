@@ -28,13 +28,17 @@ block content
       p.got-birthday-posts Here are your birthday posts...
         span#summary
       .got-birthday-posts
-        p Click the button to perform the actions listed below each post.
+        p Click the button to perform the actions listed below each post. If you don't like something, click the &nbsp;
+          i.icon-ban-circle
+          | &nbsp; icon to stop that action happening.
           br
           span.opacity-please Posts that look like this don't need any comments or likes.
-          div
-            button.do-comments-and-likes.btn.btn-primary Post comments and likes
-            table#birthday-posts.table
-            button.do-comments-and-likes.btn.btn-primary Post comments and likes
+          .row
+            .span12
+              button.do-comments-and-likes.btn.btn-primary Post comments and likes
+              //- table#birthday-posts.table
+              #birthday-posts.container.table
+              button.do-comments-and-likes.btn.btn-primary Post comments and likes
 
 block late-scripts
   script(src='javascripts/main.js')

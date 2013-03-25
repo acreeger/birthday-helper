@@ -53,17 +53,17 @@ function login(callback) {
 }
 
 var template = '\
-<tr id="{{postId}}">\
-  <td><img class="no-resize" src="{{{image-url}}}"></td>\
-  <td><strong>{{from}}</strong><br>{{message}}\
-      {{#needsSomething}}<br>\
-      <ul>\
-        {{#needsLike}}<li class="likeAction">Going to like it! (<a href="#" class="disableLike">x</a>)</li>{{/needsLike}}\
-        {{#needsComment}}<li class="commentAction">Going to post \'{{comment}}\' (<a href="#" class="disableComment">x</a>)</li>{{/needsComment}}\
-      <ul>\
-      {{/needsSomething}}\
-      </td>\
-</tr>\
+<div class="row postRow" id="{{postId}}">\
+  <div class="span1"><img class="no-resize" src="{{{image-url}}}"></div>\
+  <div class="span7"><strong>{{from}}</strong><br>{{message}}\
+    {{#needsSomething}}<br>\
+    <ul>\
+      {{#needsLike}}<li class="likeAction">Going to like it! <a title="Don\'t like this post" href="#" class="disableLike"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
+      {{#needsComment}}<li class="commentAction">Going to post \'{{comment}}\' <a title="Don\'t post this comment" href="#" class="disableComment"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
+    <ul>\
+    {{/needsSomething}}\
+  </div>\
+<div>\
 '
 
 var commentTemplates = [
@@ -190,12 +190,13 @@ function loginCompleted(response) {
 
     var disableAction = function(evt, getter, setter) {
       evt.preventDefault();
-      var postId = $(evt.target).data("fbPostId")
+      var $target = $(evt.currentTarget);
+      var postId = $target.data("fbPostId")
       var existingValue = getter(postId);
       var newValue = !existingValue;
       setter(postId, newValue)
       var opacity = newValue ? 0.3 : 1.0
-      $(evt.target).closest("li").fadeTo(400,opacity)        
+      $target.closest("li").fadeTo(400,opacity)        
     }
 
     $(".disableLike").on("click", function(evt) {

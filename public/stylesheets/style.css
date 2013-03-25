@@ -28,6 +28,16 @@ a {
 	opacity: 0.3;
 }
 
+.postRow {
+	padding: 10px 0;
+	border-top: 1px solid silver;
+	/*border-bottom: 1px solid silver;*/
+}
+
+.postRow:last-child {
+	border-bottom: 1px solid silver;
+}
+
 .logo {
 	text-indent: 45px;
 	background-position: top left;
