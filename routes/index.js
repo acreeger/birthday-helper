@@ -4,5 +4,6 @@
  */
 
 exports.index = function(req, res){
-  res.render('index', { title: 'The Birthday Helper' });
+  var isProduction = process.env.NODE_ENV === "production";
+  res.render('index', { title: 'The Birthday Helper', isProduction: isProduction});
 };

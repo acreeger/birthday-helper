@@ -260,9 +260,12 @@ function showLoginButton() {
   $("#not-logged-in").fadeIn('fast');
 }
 
+function isLocalEnv() {
+  return window.location.hostname.indexOf('local.birthdayhelper.com')  > -1; 
+}
+
 window.fbAsyncInit = function() {
-  var isLocal = window.location.hostname.indexOf('local.birthdayhelper.com')  > -1;
-  console.log("isLocal",isLocal);
+  var isLocal = isLocalEnv();
   var appId = isLocal ? '525100497552814' : '495905673807221'
   var channelUrl = isLocal ? '//local.birthdayhelper.com/channel.html' : '//shrouded-hollows-1864.herokuapp.com/channel.html'
   FB.init({
