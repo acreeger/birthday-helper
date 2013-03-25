@@ -14,3 +14,12 @@ a {
 #birthday-posts {
 	margin: 10px;
 }
+
+/*img.no-resize {
+  min-height: 22px;
+  min-width: 22px;
+}
+*/
+.opacity-please {
+	opacity: 0.3;
+}

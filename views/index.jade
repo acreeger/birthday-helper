@@ -1,20 +1,25 @@
 extends layout
 
 block content
-  h1= title
   div#fb-root
-  #not-logged-in
-    p Please Login with Facebook to continue...
-    a#fb-login(href="#")
-      img(src="images/login-button.png")
-  #logged-in
-    p#getting-birthday-posts Fetching your birthday posts now...
-    p.got-birthday-posts Here are your birthday posts...
-      span#summary
-    .got-birthday-posts
-      input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
-      table#birthday-posts
-      input.do-comments-and-likes(type='button', value='Post the comments, do the likes...')
+  .container
+    h1= title
+    #not-logged-in
+      p Please Login with Facebook to continue...
+      a#fb-login(href="#")
+        img(src="images/login-button.png")
+    #logged-in
+      p#getting-birthday-posts Fetching your birthday posts now...
+      p.got-birthday-posts Here are your birthday posts...
+        span#summary
+      .got-birthday-posts
+        p Click the button to perform the actions listed below each post.
+          br
+          span.opacity-please Posts that look like this don't need any comments or likes.
+          div
+            button.do-comments-and-likes.btn.btn-primary Post comments and likes
+            table#birthday-posts.table
+            button.do-comments-and-likes.btn.btn-primary Post comments and likes
 
 block late-scripts
   script(src='javascripts/main.js')

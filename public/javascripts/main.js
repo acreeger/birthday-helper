@@ -54,7 +54,7 @@ function login(callback) {
 
 var template = '\
 <tr id="{{postId}}">\
-  <td><img src="{{{image-url}}}"></td>\
+  <td><img class="no-resize" src="{{{image-url}}}"></td>\
   <td><strong>{{from}}</strong><br>{{message}}\
       {{#needsSomething}}<br>\
       <ul>\
