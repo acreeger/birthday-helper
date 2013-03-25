@@ -17,10 +17,12 @@ block content
     .row
       .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="true", data-width="450", data-show-faces="false")
     #not-logged-in
-      p Please Login with Facebook to continue...
-      div
-        a#fb-login(href="#")
-          img(src="images/login-button.png")
+      .row
+        p.span12 Please Login with Facebook to continue...
+      .row
+        .span12
+          a#fb-login(href="#")
+            img(src="images/login-button.png")
     #logged-in
       p#getting-birthday-posts Fetching your birthday posts now...
       p.got-birthday-posts Here are your birthday posts...

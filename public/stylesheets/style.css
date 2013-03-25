@@ -11,6 +11,10 @@ a {
 	display: none;
 }
 
+#not-logged-in {
+	margin-top: 6px;
+}
+
 #birthday-posts {
 	margin: 10px;
 }
@@ -26,7 +30,7 @@ a {
 
 .logo {
 	text-indent: 45px;
-	background-position: left;
+	background-position: top left;
 	background-repeat: no-repeat;
 	background-image: url('../images/logo40x40.png');
 }
