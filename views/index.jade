@@ -1,13 +1,26 @@
 extends layout
 
+block head
+  meta(property="og:title", content="The Birthday Helper")
+  meta(property="og:description", content="An app to help manage the onslaught of birthday messages on Facebook.")
+  meta(property="og:image", content="http://www.thebirthdayhelper.com/images/logo.png")
+  meta(property="og:type", content="website")
+  meta(property="og:url", content="http://www.thebirthdayhelper.com/")
+  meta(property="og:site_name", content="The Birthday Helper")
+  meta(property="fb:admins", content="708755493") 
+
 block content
-  div#fb-root
   .container
-    h1= title
+    div#fb-root
+    .row
+      h1.span12.logo= title
+    .row
+      .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="true", data-width="450", data-show-faces="false")
     #not-logged-in
       p Please Login with Facebook to continue...
-      a#fb-login(href="#")
-        img(src="images/login-button.png")
+      div
+        a#fb-login(href="#")
+          img(src="images/login-button.png")
     #logged-in
       p#getting-birthday-posts Fetching your birthday posts now...
       p.got-birthday-posts Here are your birthday posts...

@@ -23,3 +23,10 @@ a {
 .opacity-please {
 	opacity: 0.3;
 }
+
+.logo {
+	text-indent: 45px;
+	background-position: left;
+	background-repeat: no-repeat;
+	background-image: url('../images/logo40x40.png');
+}
