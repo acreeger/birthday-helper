@@ -7,7 +7,7 @@ a {
   color: #00B7FF;
 }
 */
-.do-comments-and-likes,.got-birthday-posts {
+.do-comments-and-likes,.got-birthday-posts, #logged-in, #not-logged-in {
 	display: none;
 }
 

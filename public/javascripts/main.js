@@ -129,6 +129,9 @@ function augmentPostsWithOtherInfo(posts) {
 
 function loginCompleted(response) {
   currentFacebookId = response.authResponse.userID;
+  $("#not-logged-in").fadeOut('fast', function() {
+    $("#logged-in").fadeIn('fast');
+  });
   //Get list of posts on wall
   getBirthdayPostsOnWall(response, function(posts) {
     augmentPostsWithOtherInfo(posts);
@@ -218,7 +221,7 @@ function getBirthdayPostsOnWall(response, callback) {
         var log = false;
         var message = post.message;
         if (log) console.log("Processing message: '", message.toLowerCase(), "' from", from); 
-        var filters = ['happy','birthday','bday','feliz','wishes'];
+        var filters = ['happy','birthday','bday','feliz','wishes', 'hbty'];
         for(var j = 0; j<filters.length; j++) {          
           var filter = filters[j];
           if (log) {console.log("Processing filter:", filter)}
@@ -252,6 +255,10 @@ function hasPermissions(permissions, callback) {
   });
 }
 
+function showLoginButton() {
+  $("#not-logged-in").fadeIn('fast');
+}
+
 window.fbAsyncInit = function() {
   var isLocal = window.location.hostname.indexOf('local.birthdayhelper.com')  > -1;
   console.log("isLocal",isLocal);
@@ -274,16 +281,16 @@ window.fbAsyncInit = function() {
         if (result) {
           loginCompleted(response);
         } else {
-          login(loginCompleted);
+          showLoginButton();
         }
       });
       // connected
     } else if (response.status === 'not_authorized') {
       // not_authorized
-      login(loginCompleted);
+      showLoginButton();
     } else {
       // not_logged_in
-      login(loginCompleted);
+      showLoginButton();
     }
   });
 };
@@ -362,4 +369,8 @@ function doCommentsAndLikes() {
 $(function () {
   pageReady = true;
   $(".do-comments-and-likes").on('click', doCommentsAndLikes);
+  $("#fb-login").on('click', function(evt) {
+    evt.preventDefault();
+    login(loginCompleted);
+  });
 });
