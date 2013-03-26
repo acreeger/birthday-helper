@@ -136,13 +136,17 @@ function loginCompleted(response) {
   getBirthdayPostsOnWall(response, function(posts) {
     augmentPostsWithOtherInfo(posts);
     // console.log("Got posts:",$.map(posts,function(post, i){return post.message}));
-    var summary = posts.length > 0 ? "You have " + posts.length + " of them." : "You have none. Come back on your birthday."
-    $("#getting-birthday-posts").fadeOut(function() {
-      $(".got-birthday-posts").fadeIn();
-      $("#summary").text(summary);
-    });    
-    if (posts.length > 0) {
-      $(".do-comments-and-likes").show();
+    if (posts.length === 0) {
+      $("#getting-birthday-posts").fadeOut(function() {
+        $(".got-no-birthday-posts").fadeIn(); 
+      });
+    } else {
+      var summary = "You have " + posts.length + " of them."
+      $("#getting-birthday-posts").fadeOut(function() {
+        $(".do-comments-and-likes").show();
+        $(".got-birthday-posts").fadeIn();
+        $("#summary").text(summary);
+      });          
     }
     var container = $("#birthday-posts");
     $.each(posts, function(i, post) {

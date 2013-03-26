@@ -15,6 +15,9 @@ block content
     .row
       h1.span12.logo= title
     .row
+      p.span12
+        strong An app to help manage the onslaught of birthday posts on Facebook.
+    .row
       .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="true", data-width="450", data-show-faces="false")
     #not-logged-in
       .row
@@ -24,7 +27,11 @@ block content
           a#fb-login(href="#")
             img(src="images/login-button.png")
     #logged-in
-      p#getting-birthday-posts Fetching your birthday posts now...
+      p#getting-birthday-posts Fetching your birthday posts now, please wait...
+      .got-no-birthday-posts
+        p You have no birthday posts. Come back on your birthday. In the mean time, here's some Family Guy.
+        div
+          iframe(width="640",height="360",src="http://www.youtube.com/embed/zIom3LSbB0I?feature=player_detailpage",frameborder="0",allowfullscreen)
       p.got-birthday-posts Here are your birthday posts...
         span#summary
       .got-birthday-posts
