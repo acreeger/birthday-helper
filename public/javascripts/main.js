@@ -58,8 +58,8 @@ var template = '\
   <div class="span7"><strong>{{from}}</strong><br>{{message}}\
     {{#needsSomething}}<br>\
     <ul>\
-      {{#needsLike}}<li class="likeAction">Going to like it! <a title="Don\'t like this post" href="#" class="disableLike"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
-      {{#needsComment}}<li class="commentAction">Going to post \'{{comment}}\' <a title="Don\'t post this comment" href="#" class="disableComment"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
+      {{#needsLike}}<li class="likeAction">Going to like this post! <a title="Don\'t like this post" href="#" class="disableLike"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
+      {{#needsComment}}<li class="commentAction">Going to add a comment: \'{{comment}}\' <a title="Don\'t post this comment" href="#" class="disableComment"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
     <ul>\
     {{/needsSomething}}\
   </div>\
@@ -68,11 +68,18 @@ var template = '\
 
 var commentTemplates = [
   "Thank you so much {{name}}!",
+  "Thank you so much {{name}}!!",
+  "Thank you so much {{name}} :-)",
   "Cheers {{name}}!",
+  "Cheers {{name}}!!",
   "Thank you {{name}}!",
+  "Thank you {{name}}! :-)",
   "Muchos gracias {{name}}!",
-  "Very much appreciated {{name}}, thank you!",
-  "Thanks {{name}}!"];
+  "Muchos gracias {{name}}!!",
+  "{{name}}, you rock. Thank you!",
+  "Thanks {{name}}!",
+  "Thanks {{name}}!!"
+];
 
 var corrections = {
   "George Shan Lyons" : "Shan",
