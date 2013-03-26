@@ -216,7 +216,7 @@ function getBirthdayPostsOnWall(response, callback) {
   FB.api('me/feed?limit=150', function(response) {
     var posts = response.data;
     var birthdayPosts = $.grep(posts, function(post, i) {
-      if (post.message && post.to) {
+      if (post.message && post.to && post.to.data && post.to.data[0].id === currentFacebookId && post.from.id !== currentFacebookId) {
         // if ()
         var from = post.from.name;
         var log = false;
