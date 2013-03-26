@@ -2,8 +2,10 @@ var pageReady = false;
 var currentFacebookId = null;
 
 var finalPostList = null;
+var finalPostMap = {};
 var disabledLikes = initLocalStorageMap("disabledLikes");
 var disabledComments = initLocalStorageMap("disabledComments");
+var peopleInfo = initLocalStorageMap("peopleInfo");
 
 function initLocalStorageMap(key) {
   var itemFromStorage = window.localStorage.getItem(key);
@@ -14,6 +16,11 @@ function initLocalStorageMap(key) {
   }
 }
 
+function updateLocalStorageMap(key, map) {
+  window.localStorage.setItem(key, JSON.stringify(map));
+}
+
+//Likes and Comments
 function isLikeDisabledForPost(postId) {
   return isActionDisabledForPost(disabledLikes, postId);
 }
@@ -37,8 +44,34 @@ function updateDisabledComments(postId, value) {
   updateLocalStorageMap('disabledComments', disabledComments);
 }
 
-function updateLocalStorageMap(key, map) {
-  window.localStorage.setItem(key, JSON.stringify(map));
+//peopleInfo
+function setNickname(userId, newValue) {
+  var personInfo = peopleInfo[userId];
+  if (newValue === "" || newValue === null) {
+    if (personInfo && personInfo['nickname']) {
+      delete personInfo['nickname'];
+    }
+  } else {
+    personInfo = personInfo || {};
+    personInfo['nickname'] = newValue 
+  }
+  if (personInfo) {
+    peopleInfo[userId] = personInfo;
+    updateLocalStorageMap("peopleInfo", peopleInfo);
+  }
+}
+
+function clearNickname(userId) {
+  setNickname(userId, null);
+}
+
+function getNickname(userId) {
+  var personInfo = peopleInfo[userId];
+  var result = null
+  if (personInfo && personInfo.nickname) {
+    result = personInfo.nickname
+  }
+  return result;
 }
 
 function login(callback) {
@@ -55,11 +88,23 @@ function login(callback) {
 var template = '\
 <div class="row postRow" id="{{postId}}">\
   <div class="span1"><img class="no-resize" src="{{{image-url}}}"></div>\
-  <div class="span7"><strong>{{from}}</strong><br>{{message}}\
+  <div class="span7"><strong>{{from}}</strong>\
+    <span class="nickname-info">\
+      <a href="#" class="nickname-button edit-nickname">not what you call this person?</a>\
+      <span class="nickname-textbox">also known as <span class="input-append"><input type="text"><button class="btn btn-mini confirm-nickname-edit" type="button"><i class="icon-ok"></i></button><button class="btn btn-mini cancel-nickname-edit" type="button"><i class="icon-remove"></i></button></span></span>\
+      <span class="nickname-aka">\
+        also known as <strong><span class="nickname-value"></span></strong>\
+        <span class="btn-group">\
+          <button class="btn btn-mini edit-nickname"><i class="icon-pencil"></i></button>\
+          <button class="btn btn-mini remove-nickname"><i class="icon-trash"></i></button>\
+        </span>\
+      </span>\
+    </span>\
+    <br>{{message}}\
     {{#needsSomething}}<br>\
     <ul>\
       {{#needsLike}}<li class="likeAction">Going to like this post! <a title="Don\'t like this post" href="#" class="disableLike"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
-      {{#needsComment}}<li class="commentAction">Going to add a comment: \'{{comment}}\' <a title="Don\'t post this comment" href="#" class="disableComment"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
+      {{#needsComment}}<li class="commentAction">Going to add a comment: \'<span class="comment-value">{{comment}}</span>\' <a title="Don\'t post this comment" href="#" class="disableComment"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
     <ul>\
     {{/needsSomething}}\
   </div>\
@@ -86,14 +131,15 @@ var corrections = {
   "Helen Zipora Creeger" : "smell"
 }
 
-function yankFirstName(fullName) {
-  if (corrections[fullName]) {
-    return corrections[fullName]
+function yankFirstName(user) {
+  var nickname = getNickname(user.id);
+  if (nickname) {
+    return nickname;
   } else {
-    var result = fullName;
-    var firstSpace = fullName.indexOf(' ')
+    var result = user.name;
+    var firstSpace = result.indexOf(' ')
     if (firstSpace > -1) {
-      result = fullName.substring(0,firstSpace);
+      result = result.substring(0,firstSpace);
     }
     return result;
   }
@@ -129,9 +175,37 @@ function augmentPostsWithOtherInfo(posts) {
       needsLike : needsLike,
       needsComment : needsComment
     }
+    // var data = {
+    //   needsLike : true,
+    //   needsComment : true
+    // }
     post['tbh-data'] = data;
     // console.log("Message",post.message,"needsLike", needsLike, "needsComment",needsComment);
   })
+}
+
+function toggleNicknameControls($postRow, showTextbox, showNickname) {
+  $postRow.toggleClass("editing-nickname", showTextbox)
+          .toggleClass("has-nickname", showNickname); 
+}
+//TODO: Call this from a more generic formatPostRow method
+function formatNicknameInfo($postRow, post) {
+    //if there is a nickname, show the has-nickname section, populating the nickname
+    var nickname = getNickname(post.from.id);
+    if (nickname) {
+      $postRow.find(".nickname-value").text(nickname);
+      $postRow.find(".nickname-textbox input").val(nickname)
+      toggleNicknameControls($postRow, false, true);
+    } else {
+      $postRow.find(".nickname-textbox input").val("")
+      toggleNicknameControls($postRow, false, false);
+    }
+}
+
+function createCommentForPost(post) {
+  var commentTemplate = post['tbh-data']['comment-template'];
+  var name = yankFirstName(post.from);
+  return Mustache.render(commentTemplate, {name:name});
 }
 
 function loginCompleted(response) {
@@ -163,8 +237,8 @@ function loginCompleted(response) {
       var comment;
       if (tbhData.needsComment) {
         var commentTemplate = chooseRandomTemplate();
-        var name = yankFirstName(post.from.name);
-        comment = Mustache.render(commentTemplate, {name:name});
+        tbhData['comment-template'] = commentTemplate;
+        comment = createCommentForPost(post);
         tbhData['comment'] = comment;
       }         
       
@@ -182,10 +256,10 @@ function loginCompleted(response) {
       var postRow = Mustache.to_html(template, data);
       var $postRow = $(postRow);
       if (!data.needsSomething) {
-        $postRow.css("opacity",0.3)
+        $postRow.addClass("no-action-required");
       } else {
         var markActionAsDisabled = function (actionType) {
-          $postRow.find("." + actionType + "Action").css("opacity",0.3)
+          $postRow.find("." + actionType + "Action").addClass("no-action-required");
         }
 
         if (isLikeDisabledForPost(post.id)) {
@@ -196,6 +270,8 @@ function loginCompleted(response) {
         }
       }
       $postRow.find(".disableLike, .disableComment").data("fbPostId", post.id);
+      formatNicknameInfo($postRow, post);
+      $postRow.data("fbPostId", post.id);
       $postRow.appendTo(container);
     });
 
@@ -210,12 +286,73 @@ function loginCompleted(response) {
       $target.closest("li").fadeTo(400,opacity)        
     }
 
+    //TODO: Use a context to make this more efficient.
     $(".disableLike").on("click", function(evt) {
       disableAction(evt, isLikeDisabledForPost, updateDisabledLikes);
     });
     $(".disableComment").on("click", function(evt) {
       disableAction(evt, isCommentDisabledForPost, updateDisabledComments);
     });
+
+    var updateComment = function($postRow, post) {
+        if (post['tbh-data'].needsComment) {
+          var comment = createCommentForPost(post);
+          $postRow.find(".comment-value").text(comment);
+        }
+    }
+
+    container.on("click", ".remove-nickname", function(evt) {
+      evt.preventDefault();
+      var $postRow = $(this).closest('.postRow');
+      var postId = $postRow.data("fbPostId");
+      var post = finalPostMap[postId];
+      var fromUserId = post.from.id;
+
+      clearNickname(fromUserId);
+      formatNicknameInfo($postRow, post);
+      updateComment($postRow, post);
+    });
+
+    container.on("click",".edit-nickname", function(evt) {
+      evt.preventDefault();
+      var $this = $(this);
+      var $postRow = $this.closest('.postRow');
+      var postId = $postRow.data("fbPostId");
+      var post = finalPostMap[postId];
+      var fromUserId = post.from.id;
+
+      var showTextbox = true, showNickname = false
+      toggleNicknameControls($postRow, showTextbox, showNickname);
+
+      var $textbox = $postRow.find(".nickname-textbox input")
+
+      var updateNickname = function () {
+        $postRow.off('.tbh-nickname');
+        //get value from text box
+        var newNickname = $.trim($textbox.val());
+        if (newNickname === "") {
+          clearNickname(fromUserId);
+        } else {
+          setNickname(fromUserId, newNickname);
+        }
+        formatNicknameInfo($postRow, post);
+        updateComment($postRow, post);
+      }
+
+      $textbox.on('keydown.tbh-nickname', function (evt) {
+        if (evt.keyCode === 13) {
+          updateNickname();
+        }
+      });
+      $postRow.find(".confirm-nickname-edit").on('click.tbh-nickname', updateNickname);
+      $postRow.find(".cancel-nickname-edit").on('click.tbh-nickname', function() {
+
+        $postRow.off('.tbh-nickname');
+        formatNicknameInfo($postRow, post);
+      });
+
+      $textbox.focus()
+    })
 
     finalPostList = posts;    
   });
@@ -228,7 +365,6 @@ function getBirthdayPostsOnWall(response, callback) {
     var posts = response.data;
     var birthdayPosts = $.grep(posts, function(post, i) {
       if (post.message && post.to && post.to.data && post.to.data[0].id === currentFacebookId && post.from.id !== currentFacebookId) {
-        // if ()
         var from = post.from.name;
         var log = false;
         var message = post.message;
@@ -239,6 +375,7 @@ function getBirthdayPostsOnWall(response, callback) {
           if (log) {console.log("Processing filter:", filter)}
           if (log) {console.log("indexOf:", message.toLowerCase().indexOf(filter))}  
           if (message.toLowerCase().indexOf(filter) > -1) {
+            finalPostMap[post.id] = post;
             return true;
           }
         }

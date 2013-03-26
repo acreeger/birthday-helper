@@ -19,11 +19,6 @@ a {
 	margin: 10px;
 }
 
-/*img.no-resize {
-  min-height: 22px;
-  min-width: 22px;
-}
-*/
 .opacity-please {
 	opacity: 0.3;
 }
@@ -32,6 +27,14 @@ a {
 	padding: 10px 0;
 	border-top: 1px solid silver;
 	/*border-bottom: 1px solid silver;*/
+}
+
+.no-action-required {
+	opacity: 0.3;
+}
+
+.no-action-required .nickname-info {
+	display: none;
 }
 
 .postRow:last-child {
@@ -44,3 +47,59 @@ a {
 	background-repeat: no-repeat;
 	background-image: url('../images/logo40x40.png');
 }
+
+.nickname-textbox input{
+	height: 0.85em;
+	width: 10em;
+}
+
+.nickname-textbox .input-append {
+	margin-top: -2px;
+	margin-bottom: 0;
+}
+
+/*Editing nickname*/
+.postRow.editing-nickname .nickname-button {
+	display: none;
+}
+
+.postRow.editing-nickname .nickname-textbox{
+	display: inline;
+}
+
+.postRow.editing-nickname .nickname-aka {
+	display: none;
+}
+
+/*Has nickname*/
+.postRow.has-nickname .nickname-button {
+	display: none;
+}
+
+.postRow.has-nickname .nickname-textbox {
+	display: none;
+}
+
+.postRow.has-nickname .nickname-aka {
+	display: inline;
+}
+
+/*No nickname*/
+.nickname-button {
+	padding-left: 12px;
+	font-size: 0.8em;
+	display: inline;
+}
+
+.postRow .nickname-textbox {
+	display: none;
+}
+
+.postRow .nickname-aka {
+	display: none;
+}
+
+.postRow .nickname-aka .btn-group {
+	margin-top: -4px;
+}
+
