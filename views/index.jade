@@ -17,8 +17,10 @@ block content
     .row
       p.span12
         strong An app to help manage the onslaught of birthday posts on Facebook.
-    .row
+    .row.visible-desktop.visible-tablet.hidden-phone
       .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="true", data-width="450", data-show-faces="false")
+    .row.hidden-desktop.hidden-tablet.visible-phone
+      .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="false", data-layout="box_count", data-width="450", data-show-faces="false")
     #not-logged-in
       .row
         p.span12 Please Login with Facebook to continue...
