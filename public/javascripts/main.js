@@ -364,24 +364,29 @@ function getBirthdayPostsOnWall(response, callback) {
   FB.api('me/feed?limit=150', function(response) {
     var posts = response.data;
     var birthdayPosts = $.grep(posts, function(post, i) {
-      if (post.message && post.to && post.to.data && post.to.data[0].id === currentFacebookId && post.from.id !== currentFacebookId) {
-        var from = post.from.name;
-        var log = false;
-        var message = post.message;
-        if (log) console.log("Processing message: '", message.toLowerCase(), "' from", from); 
-        var filters = ['happy','birthday','bday','feliz','wishes', 'hbty'];
-        for(var j = 0; j<filters.length; j++) {          
-          var filter = filters[j];
-          if (log) {console.log("Processing filter:", filter)}
-          if (log) {console.log("indexOf:", message.toLowerCase().indexOf(filter))}  
-          if (message.toLowerCase().indexOf(filter) > -1) {
-            finalPostMap[post.id] = post;
-            return true;
+      try {
+        if (post.message && post.to && post.to.data && post.to.data.length > 0 && post.to.data[0].id === currentFacebookId && post.from.id !== currentFacebookId) {
+          var from = post.from.name;
+          var log = false;
+          var message = post.message;
+          if (log) console.log("Processing message: '", message.toLowerCase(), "' from", from); 
+          var filters = ['happy','birthday','bday','feliz','wishes', 'hbty'];
+          for(var j = 0; j<filters.length; j++) {
+            var filter = filters[j];
+            if (log) {console.log("Processing filter:", filter)}
+            if (log) {console.log("indexOf:", message.toLowerCase().indexOf(filter))}  
+            if (message.toLowerCase().indexOf(filter) > -1) {
+              finalPostMap[post.id] = post;
+              return true;
+            }
           }
+          console.log("Discarding message: '", message, "' from", from);
         }
-        console.log("Discarding message: '", message, "' from", from);        
-      }         
-      return false;
+        return false;
+      } catch (err) {
+        console.log("An error occured whilst processing post",post,":", err);
+        return false;
+      }
     });
     console.log("Got",birthdayPosts.length, 'birthday posts from a total of', posts.length,'posts');
     callback(birthdayPosts);   
