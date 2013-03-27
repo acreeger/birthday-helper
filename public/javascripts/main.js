@@ -103,8 +103,8 @@ var template = '\
     <br>{{message}}\
     {{#needsSomething}}<br>\
     <ul>\
-      {{#needsLike}}<li class="likeAction">Going to like this post! <a title="Don\'t like this post" href="#" class="disableLike"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
-      {{#needsComment}}<li class="commentAction">Going to add a comment: \'<span class="comment-value">{{comment}}</span>\' <a title="Don\'t post this comment" href="#" class="disableComment"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
+      {{#needsLike}}<li class="likeAction">Going to like this post! <a title="Don\'t like this post" href="#" class="disableLike disableAction"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
+      {{#needsComment}}<li class="commentAction">Going to add a comment: \'<span class="comment-value">{{comment}}</span>\' <a title="Don\'t post this comment" href="#" class="disableComment disableAction"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
     <ul>\
     {{/needsSomething}}\
   </div>\
@@ -177,7 +177,7 @@ function augmentPostsWithOtherInfo(posts) {
     }
     // var data = {
     //   needsLike : true,
-    //   needsComment : true
+    //   needsComment : false
     // }
     post['tbh-data'] = data;
     // console.log("Message",post.message,"needsLike", needsLike, "needsComment",needsComment);
@@ -461,21 +461,26 @@ window.fbAsyncInit = function() {
   ref.parentNode.insertBefore(js, ref);
  }(document));
 
-function doCommentsAndLikes() {
+function doCommentsAndLikes(doComments) {
   //TODO: iterate each post
   var doneMap = {};
   var count = 0
   var kState = "at-least-one-finished"
+  var markPostRowAsComplete = function($postRow) {
+    $postRow.find(".disableAction").hide();
+    $postRow.fadeTo(400, 0.3);
+  }
+
   $.each(finalPostList, function(i, post){
     var tbhData = post['tbh-data'];
     var postId = post.id;
+    var neededComment = tbhData.needsComment;
+    var neededLike = tbhData.needsLike;
 
     if (tbhData.needsComment || tbhData.needsLike) {
       var baseUrl = postId + "/";
-      if (tbhData.needsComment && !isCommentDisabledForPost(postId)) {
+      if (doComments & tbhData.needsComment && !isCommentDisabledForPost(postId)) {
         var comment = tbhData.comment;
-        var neededComment = tbhData.needsComment;
-        var neededLike = tbhData.needsLike;
         console.log("About to post comment:", comment, "on post",post.message)
         var url = baseUrl + "comments"
         var data = {message : comment};
@@ -490,7 +495,7 @@ function doCommentsAndLikes() {
           } else {
             if (!neededLike || doneMap[postId] == kState) {
               //complete
-              $("#" + postId).fadeTo(400, 0.3);
+              markPostRowAsComplete($("#" + postId));
             }
             doneMap[postId] = kState;
             tbhData.needsComment = false;
@@ -509,10 +514,16 @@ function doCommentsAndLikes() {
               console.log("Got error when liking post", postId, "from", post.from.name, ":", response.error);
             }            
             $("#" + postId).css("color","red")                        
+          } else if(!doComments && neededComment) {
+            //not doing comments, and it needed one. Hide the 'ban icon' and gray the like action.
+            tbhData.needsLike = false;
+            var $postRow = $("#" + postId);
+            $postRow.find(".disableLike").hide();
+            $postRow.find(".likeAction").fadeTo(400, 0.3);
           } else {
             if (!neededComment || doneMap[postId] == kState) {
               //complete
-              $("#" + postId).fadeTo(400, 0.3);
+              markPostRowAsComplete($("#" + postId));
             }
             doneMap[postId] = kState;
             tbhData.needsLike = false;
@@ -525,7 +536,8 @@ function doCommentsAndLikes() {
 
 $(function () {
   pageReady = true;
-  $(".do-comments-and-likes").on('click', doCommentsAndLikes);
+  $(".do-comments-and-likes").on('click', function() {doCommentsAndLikes(true)});
+  $(".do-likes").on('click', function() {doCommentsAndLikes(false)});
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
     login(loginCompleted);

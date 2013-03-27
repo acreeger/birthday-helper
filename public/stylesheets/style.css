@@ -7,6 +7,10 @@ a {
   color: #00B7FF;
 }
 */
+
+.do-likes {
+	margin-left: 20px;
+}
 .do-comments-and-likes,.got-birthday-posts, .got-no-birthday-posts, #logged-in, #not-logged-in {
 	display: none;
 }
@@ -102,4 +106,6 @@ a {
 .postRow .nickname-aka .btn-group {
 	margin-top: -4px;
 }
+
+
 
