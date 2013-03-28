@@ -16,18 +16,20 @@ block content
       h1.span12.logo= title
     .row
       p.span12
-        strong An app to help manage the onslaught of birthday posts on Facebook.
+        strong Manage the onslaught of birthday posts on Facebook.
     .row.visible-desktop.visible-tablet.hidden-phone
       .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="true", data-width="450", data-show-faces="false")
     .row.hidden-desktop.hidden-tablet.visible-phone
       .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="false", data-layout="button_count", data-width="450", data-show-faces="false")
     #not-logged-in
       .row
-        p.span12 Please Login with Facebook to continue...
+        .span6
+          p This app helps you see a list of all your birthday posts, automatically like and generate personalized comments for them. It will save you hours on your birthday.
       .row
         .span12
           a#fb-login(href="#")
             img(src="images/login-button.png")
+          | to continue - we won't touch your timeline until you ask us to.
     #logged-in
       p#getting-birthday-posts Fetching your birthday posts now, please wait...
       .got-no-birthday-posts
