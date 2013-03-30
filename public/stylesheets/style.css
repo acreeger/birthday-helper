@@ -11,10 +11,18 @@ a {
 	margin-right: 5px;
 }
 
-.do-likes {
-	margin-left: 20px;
+.call-to-action-row {
+	margin-top: -20px;
 }
-.do-comments-and-likes,.got-birthday-posts, .got-no-birthday-posts, #logged-in, #not-logged-in {
+.call-to-action-row button {
+	margin-top: 20px;
+}
+
+.do-comments-and-likes {
+	margin-right: 20px;
+}
+
+.got-birthday-posts, .got-no-birthday-posts, #logged-in, #not-logged-in {
 	display: none;
 }
 
