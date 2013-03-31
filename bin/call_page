@@ -1,0 +1,18 @@
+#! /app/bin/node
+var http = require("http");
+
+function callPage() {
+	var options = {
+	  host: 'www.thebirthdayhelper.com',
+	  port: 80,
+	  path: '/'
+	};
+
+	http.get(options, function(res) {
+	  console.log("Got response: " + res.statusCode);
+	}).on('error', function(e) {
+	  console.log("Got error: " + e.message);
+	});
+}
+callPage();
+//exit();
