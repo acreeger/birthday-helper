@@ -77,10 +77,11 @@ function getNickname(userId) {
 function login(callback) {
     FB.login(function(response) {
         if (response.authResponse) {
-            console.log("FB User logged in. Response:",response);
+            //console.log("FB User logged in. Response:",response);
+            trackEvent('Facebook', 'Login', 'completed');
             callback(response);
         } else {
-            // cancelled
+          trackEvent('Facebook', 'Login', 'cancelled');            // cancelled
         }
     }, {scope: 'read_stream, publish_stream'});
 }
@@ -534,12 +535,19 @@ function doCommentsAndLikes(doComments) {
   })
 }
 
+function trackEvent(category,action,label) {
+  if (!isLocalEnv() && _gaq) {
+    _gaq.push(['_trackEvent', category, action, label]);
+  }
+}
+
 $(function () {
   pageReady = true;
-  $(".do-comments-and-likes").on('click', function() {doCommentsAndLikes(true)});
-  $(".do-likes").on('click', function() {doCommentsAndLikes(false)});
+  $(".do-comments-and-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Comments And Likes');doCommentsAndLikes(true)});
+  $(".do-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Likes Only');doCommentsAndLikes(false)});
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
+    trackEvent('Facebook', 'Login', 'started');
     login(loginCompleted);
   });
 });
