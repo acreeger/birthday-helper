@@ -112,6 +112,14 @@ var template = '\
 <div>\
 '
 
+var commentTemplateListTemplate = '\
+{{#templates}}\
+<div class="edit-comment-template">\
+  <span class="input-append"><input data-original="{{.}}" type="text" value="{{.}}"><button class="btn btn-mini reset-template"><i class="icon-chevron-left"></i></button><button class="btn btn-mini remove-template"><i class="icon-trash"></i></button></span>\
+</div>\
+{{/templates}}\
+'
+
 var commentTemplates = [
   "Thank you so much {{name}}!",
   "Thank you so much {{name}}!!",
@@ -545,6 +553,48 @@ $(function () {
   pageReady = true;
   $(".do-comments-and-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Comments And Likes');doCommentsAndLikes(true)});
   $(".do-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Likes Only');doCommentsAndLikes(false)});
+  $(".customize-comments").on('click', function(evt) {
+    evt.preventDefault();
+    var data = {
+      templates : commentTemplates
+    }
+
+    var templateListHtml = Mustache.to_html(commentTemplateListTemplate, data);
+    var $templateListHtml = $(templateListHtml);
+    // hide/show the reset button
+    $templateListHtml.find("input[type=text]").on("keyup", function() {
+      var $this = $(this);
+      var originalValue = $this.attr("data-original");
+      var currentValue = $this.val();
+      var $resetButton = $this.closest(".input-append").find(".reset-template");
+      if (originalValue !== currentValue) {
+        $resetButton.show();
+        $resetButton.animate({width: '28px'}, 100);
+      } else {
+        $resetButton.animate({width: '0'}, 100, "swing", function() {
+          $resetButton.hide();
+        });
+      }
+    });
+
+    //click handler for reset-button
+    $templateListHtml.find(".reset-template").on('click', function() {
+      var $this = $(this);
+      var $textBox = $this.closest(".input-append").find("input");
+      var originalValue = $textBox.attr("data-original");
+      $textBox.val(originalValue).trigger('keyup');
+    });
+
+    //TODO: Click handler for delete button
+
+    $("#comment-template-list").append($templateListHtml);
+
+    $(".posts-view").fadeOut("fast", function() {
+      $(".customize-comments-view").fadeIn("fast");
+      // $(document).scrollTop(0);
+      // TODO: Scroll to the .customzi: http://stackoverflow.com/questions/6677035/jquery-scroll-to-element
+    });
+  });
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
     trackEvent('Facebook', 'Login', 'started');
