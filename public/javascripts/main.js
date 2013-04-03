@@ -115,7 +115,7 @@ var template = '\
 var commentTemplateListTemplate = '\
 {{#templates}}\
 <div class="edit-comment-template">\
-  <span class="input-append"><input data-original="{{.}}" type="text" value="{{.}}"><button class="btn btn-mini reset-template"><i class="icon-chevron-left"></i></button><button class="btn btn-mini remove-template"><i class="icon-trash"></i></button></span>\
+  <span class="input-append"><input data-original="{{.}}" type="text" value="{{.}}"><button class="btn btn-mini reset-template"><i class="icon-undo"></i></button><button class="btn btn-mini remove-template"><i class="icon-trash"></i></button></span>\
 </div>\
 {{/templates}}\
 '
