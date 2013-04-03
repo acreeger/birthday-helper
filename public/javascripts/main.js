@@ -549,6 +549,12 @@ function trackEvent(category,action,label) {
   }
 }
 
+function transitionBlock(from, to, callback) {
+  $(from).fadeOut("fast", function() {
+    $(to).fadeIn("fast", callback);
+  });
+}
+
 $(function () {
   pageReady = true;
   $(".do-comments-and-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Comments And Likes');doCommentsAndLikes(true)});
@@ -585,18 +591,31 @@ $(function () {
       $textBox.val(originalValue).trigger('keyup');
     });
 
-    //TODO: Click handler for delete button
+    $templateListHtml.find(".remove-template").on('click', function() {
+      var $this = $(this);
+      var $containerDiv = $(this).closest(".edit-comment-template");
+      var $textbox = $containerDiv.find("input");
+      var isDeleted = $textbox.data("isDeleted") || false;
+      var opacity = isDeleted ? 1 : 0.3;
+      $textbox.fadeTo(400, opacity)
+      $textbox.data("isDeleted", !isDeleted);
+      $this.find("i").toggleClass("icon-trash icon-undo");
+    });
 
     $("#comment-template-list").append($templateListHtml);
 
-    $(".posts-view").fadeOut("fast", function() {
-      $(".customize-comments-view").fadeIn("fast", function() {
-        $('html, body').animate({
-             scrollTop: $(".customize-comments-view").offset().top
-         }, 200);
-      });
+    transitionBlock(".posts-view", ".customize-comments-view", function() {
+      $('html, body').animate({
+           scrollTop: $(".customize-comments-view").offset().top
+       }, 200);
     });
   });
+
+  $(".customize-comments-cancel").on("click", function() {
+    $("#comment-template-list").empty();
+    transitionBlock(".customize-comments-view", ".posts-view");
+  });
+
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
     trackEvent('Facebook', 'Login', 'started');
