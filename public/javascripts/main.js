@@ -590,9 +590,11 @@ $(function () {
     $("#comment-template-list").append($templateListHtml);
 
     $(".posts-view").fadeOut("fast", function() {
-      $(".customize-comments-view").fadeIn("fast");
-      // $(document).scrollTop(0);
-      // TODO: Scroll to the .customzi: http://stackoverflow.com/questions/6677035/jquery-scroll-to-element
+      $(".customize-comments-view").fadeIn("fast", function() {
+        $('html, body').animate({
+             scrollTop: $(".customize-comments-view").offset().top
+         }, 200);
+      });
     });
   });
   $("#fb-login").on('click', function(evt) {
