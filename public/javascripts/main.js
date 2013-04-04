@@ -7,12 +7,12 @@ var disabledLikes = initLocalStorageMap("disabledLikes");
 var disabledComments = initLocalStorageMap("disabledComments");
 var peopleInfo = initLocalStorageMap("peopleInfo");
 
-function initLocalStorageMap(key) {
+function initLocalStorageMap(key, defaultVal) {
   var itemFromStorage = window.localStorage.getItem(key);
   if (itemFromStorage) {
     return JSON.parse(itemFromStorage)
   } else {
-    return {}
+    return defaultVal || {}
   }
 }
 
@@ -217,6 +217,15 @@ function createCommentForPost(post) {
   return Mustache.render(commentTemplate, {name:name});
 }
 
+function updateCommentTemplateForPost(post) {
+  var commentTemplate = chooseRandomTemplate();
+  var tbhData = post['tbh-data'];
+  tbhData['comment-template'] = commentTemplate;
+  comment = createCommentForPost(post);
+  tbhData['comment'] = comment;
+  return comment;
+}
+
 function loginCompleted(response) {
   currentFacebookId = response.authResponse.userID;
   $("#not-logged-in").fadeOut('fast', function() {
@@ -245,10 +254,7 @@ function loginCompleted(response) {
       
       var comment;
       if (tbhData.needsComment) {
-        var commentTemplate = chooseRandomTemplate();
-        tbhData['comment-template'] = commentTemplate;
-        comment = createCommentForPost(post);
-        tbhData['comment'] = comment;
+        comment = updateCommentTemplateForPost(post);
       }         
       
       var data = {
@@ -591,6 +597,7 @@ $(function () {
       $textBox.val(originalValue).trigger('keyup');
     });
 
+    //click handler for remove/undo button
     $templateListHtml.find(".remove-template").on('click', function() {
       var $this = $(this);
       var $containerDiv = $(this).closest(".edit-comment-template");
@@ -600,6 +607,8 @@ $(function () {
       $textbox.fadeTo(400, opacity)
       $textbox.data("isDeleted", !isDeleted);
       $this.find("i").toggleClass("icon-trash icon-undo");
+      $textbox.toggleClass("deleted")
+      //TODO: Check to see how many are left - if its just one, disable and gray the delete button
     });
 
     $("#comment-template-list").append($templateListHtml);
@@ -611,10 +620,48 @@ $(function () {
     });
   });
 
+  function leaveCustomizeCommentsView() {      
+    transitionBlock(".customize-comments-view", ".posts-view", function() {
+      $("#comment-template-list").empty();
+    });
+  }
+
   $(".customize-comments-cancel").on("click", function() {
-    $("#comment-template-list").empty();
-    transitionBlock(".customize-comments-view", ".posts-view");
+    leaveCustomizeCommentsView();  
   });
+
+  //save handler
+  $(".customize-comments-save").on("click", function(){
+    //iterate through all the textboxes
+    var templateListContainer = $("#comment-template-list");
+    var textboxes = $(templateListContainer.find("input[type=text]").not(".deleted"));
+    var newTemplateList = [];
+    var quickLookupMap = {}
+    textboxes.each(function() {
+      var template = $.trim($(this).val())
+      if (template !== ""){
+        newTemplateList.push(template);
+        quickLookupMap[template] = true;        
+      }
+    });
+    //TODO: Update to local storage, but make sure you add a reset to default button first.
+    commentTemplates = newTemplateList;
+    $.each(finalPostList, function() {
+      if (this['tbh-data'].needsComment) {
+        //TODO: NEED TO UPDATE OLD COMMENTS THAT HAVE CHANGED TO THEIR NEW ONE.
+        var currentTemplate = this['tbh-data']['comment-template'];
+        if (quickLookupMap[currentTemplate] !== true) {
+          //no longer exists, need to update
+          // console.log("Comment template",currentTemplate,"no longer exists. Updating post",this.id);
+          var comment = updateCommentTemplateForPost(this);
+          $("#" + this.id).find(".comment-value").text(comment);
+        } 
+      }
+    });
+    leaveCustomizeCommentsView();
+  });
+
+  //TODO Button for adding new one - have it automatically appear? Have an icon?
 
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
