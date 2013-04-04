@@ -573,6 +573,11 @@ $(function () {
 
     var templateListHtml = Mustache.to_html(commentTemplateListTemplate, data);
     var $templateListHtml = $(templateListHtml);
+
+    if (commentTemplates.length == 1) {
+      $templateListHtml.find(".remove-template").addClass("disabled").prop("disabled", true);
+    }
+
     // hide/show the reset button
     $templateListHtml.find("input[type=text]").on("keyup", function() {
       var $this = $(this);
@@ -604,11 +609,13 @@ $(function () {
       var $textbox = $containerDiv.find("input");
       var isDeleted = $textbox.data("isDeleted") || false;
       var opacity = isDeleted ? 1 : 0.3;
-      $textbox.fadeTo(400, opacity)
-      $textbox.data("isDeleted", !isDeleted);
-      $this.find("i").toggleClass("icon-trash icon-undo");
-      $textbox.toggleClass("deleted")
-      //TODO: Check to see how many are left - if its just one, disable and gray the delete button
+      $textbox.fadeTo(400, opacity).data("isDeleted", !isDeleted).toggleClass("deleted");
+      $this.find("i").toggleClass("icon-trash icon-undo");      
+
+      // make sure they can't delete the last box.
+      var commentTemplatesNotDeleted = $("#comment-template-list").find("input[type=text]").not(".deleted");
+      var opacityForRemoveButton = commentTemplatesNotDeleted.length == 1 ? 0.3 : 1
+      commentTemplatesNotDeleted.closest(".input-append").find(".remove-template").fadeTo(400, opacityForRemoveButton).prop("disabled", commentTemplatesNotDeleted.length == 1);
     });
 
     $("#comment-template-list").append($templateListHtml);
@@ -641,7 +648,8 @@ $(function () {
       var template = $.trim($(this).val())
       if (template !== ""){
         newTemplateList.push(template);
-        quickLookupMap[template] = true;        
+        quickLookupMap[template] = true;
+        //TODO: Keep track of changes here        
       }
     });
     //TODO: Update to local storage, but make sure you add a reset to default button first.

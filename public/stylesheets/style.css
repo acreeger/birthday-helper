@@ -23,7 +23,7 @@
 	margin: 10px;
 }
 
-.opacity-please {
+.opacity-please, .disabled {
 	opacity: 0.3;
 }
 
