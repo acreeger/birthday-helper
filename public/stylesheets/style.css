@@ -110,8 +110,12 @@
 /* Editing comment tempates */
 .customize-comments-view {
 	display: none;
+	margin-bottom: 10px;
 }
 
+#comment-template-list {
+	margin-top:10px;
+}
 .reset-template {
 	display: none;
 	width: 0px;

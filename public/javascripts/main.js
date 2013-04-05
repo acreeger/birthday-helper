@@ -120,7 +120,7 @@ var commentTemplateListTemplate = '\
 {{/templates}}\
 '
 
-var commentTemplates = [
+var defaultCommentTemplates = [
   "Thank you so much {{name}}!",
   "Thank you so much {{name}}!!",
   "Thank you so much {{name}} :-)",
@@ -134,6 +134,8 @@ var commentTemplates = [
   "Thanks {{name}}!",
   "Thanks {{name}}!!"
 ];
+
+var commentTemplates = defaultCommentTemplates;
 
 var corrections = {
   "George Shan Lyons" : "Shan",
@@ -226,6 +228,52 @@ function updateCommentTemplateForPost(post) {
   return comment;
 }
 
+function addPostsToPage(posts) {
+  var container = $("#birthday-posts");
+  container.empty();
+  $.each(posts, function(i, post) {
+
+    var tbhData = post['tbh-data'];
+
+    var comment;
+    if (tbhData.needsComment) {
+      comment = updateCommentTemplateForPost(post);
+    }
+
+    var data = {
+      'image-url': "http://graph.facebook.com/" + post.from.id + "/picture",
+      from : post.from.name,
+      message : post.message,
+      needsSomething : tbhData.needsLike || tbhData.needsComment,
+      needsLike : tbhData.needsLike,
+      needsComment : tbhData.needsComment,
+      comment : comment,
+      postId : post.id
+    };
+
+    var postRow = Mustache.to_html(template, data);
+    var $postRow = $(postRow);
+    if (!data.needsSomething) {
+      $postRow.addClass("no-action-required");
+    } else {
+      var markActionAsDisabled = function (actionType) {
+        $postRow.find("." + actionType + "Action").addClass("no-action-required");
+      }
+
+      if (isLikeDisabledForPost(post.id)) {
+        markActionAsDisabled('like');
+      }
+      if (isCommentDisabledForPost(post.id)) {
+        markActionAsDisabled('comment');
+      }
+    }
+    $postRow.find(".disableLike, .disableComment").data("fbPostId", post.id);
+    formatNicknameInfo($postRow, post);
+    $postRow.data("fbPostId", post.id);
+    $postRow.appendTo(container);
+  });
+}
+
 function loginCompleted(response) {
   currentFacebookId = response.authResponse.userID;
   $("#not-logged-in").fadeOut('fast', function() {
@@ -247,48 +295,7 @@ function loginCompleted(response) {
         $("#summary").text(summary);
       });          
     }
-    var container = $("#birthday-posts");
-    $.each(posts, function(i, post) {
-      
-      var tbhData = post['tbh-data'];
-      
-      var comment;
-      if (tbhData.needsComment) {
-        comment = updateCommentTemplateForPost(post);
-      }         
-      
-      var data = {
-        'image-url': "http://graph.facebook.com/" + post.from.id + "/picture",
-        from : post.from.name,
-        message : post.message,
-        needsSomething : tbhData.needsLike || tbhData.needsComment,
-        needsLike : tbhData.needsLike,
-        needsComment : tbhData.needsComment,
-        comment : comment,
-        postId : post.id
-      };
-
-      var postRow = Mustache.to_html(template, data);
-      var $postRow = $(postRow);
-      if (!data.needsSomething) {
-        $postRow.addClass("no-action-required");
-      } else {
-        var markActionAsDisabled = function (actionType) {
-          $postRow.find("." + actionType + "Action").addClass("no-action-required");
-        }
-
-        if (isLikeDisabledForPost(post.id)) {
-          markActionAsDisabled('like');
-        }
-        if (isCommentDisabledForPost(post.id)) {
-          markActionAsDisabled('comment');
-        }
-      }
-      $postRow.find(".disableLike, .disableComment").data("fbPostId", post.id);
-      formatNicknameInfo($postRow, post);
-      $postRow.data("fbPostId", post.id);
-      $postRow.appendTo(container);
-    });
+    addPostsToPage(posts);
 
     var disableAction = function(evt, getter, setter) {
       evt.preventDefault();
@@ -315,7 +322,7 @@ function loginCompleted(response) {
           $postRow.find(".comment-value").text(comment);
         }
     }
-
+    var container = $("#birthday-posts");
     container.on("click", ".remove-nickname", function(evt) {
       evt.preventDefault();
       var $postRow = $(this).closest('.postRow');
@@ -561,64 +568,76 @@ function transitionBlock(from, to, callback) {
   });
 }
 
+function createCommentTemplateListHtml(commentTemplates) {
+  var data = {
+    templates : commentTemplates
+  }
+
+  var templateListHtml = Mustache.to_html(commentTemplateListTemplate, data);
+  var $templateListHtml = $(templateListHtml);
+  return $templateListHtml;
+}
+
+function initCommentTemplateList(commentTemplates) {
+  $("#comment-template-list").empty();
+  var $templateListHtml = createCommentTemplateListHtml(commentTemplates);
+
+  if (commentTemplates.length == 1) {
+    $templateListHtml.find(".remove-template").addClass("disabled").prop("disabled", true);
+  }
+
+  $("#comment-template-list").append($templateListHtml);
+}
+
 $(function () {
   pageReady = true;
   $(".do-comments-and-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Comments And Likes');doCommentsAndLikes(true)});
   $(".do-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Likes Only');doCommentsAndLikes(false)});
+  var $customizeCommentsContainer = $(".customize-comments-view");
+
+  // hide/show the reset-comment-template button
+  $customizeCommentsContainer.on("keyup", "input[type=text]", function() {
+    var $this = $(this);
+    var originalValue = $this.attr("data-original");
+    var currentValue = $this.val();
+    var $resetButton = $this.closest(".input-append").find(".reset-template");
+    if (originalValue !== currentValue) {
+      $resetButton.show();
+      $resetButton.animate({width: '28px'}, 100);
+    } else {
+      $resetButton.animate({width: '0'}, 100, "swing", function() {
+        $resetButton.hide();
+      });
+    }
+  });
+
+    //click handler for resetcomment-template button
+  $customizeCommentsContainer.on("click", ".reset-template", function() {
+    var $this = $(this);
+    var $textBox = $this.closest(".input-append").find("input");
+    var originalValue = $textBox.attr("data-original");
+    $textBox.val(originalValue).trigger('keyup');
+  });
+
+  //click handler for remove/undo button
+  $customizeCommentsContainer.on("click", ".remove-template", function() {
+    var $this = $(this);
+    var $containerDiv = $(this).closest(".edit-comment-template");
+    var $textbox = $containerDiv.find("input");
+    var isDeleted = $textbox.data("isDeleted") || false;
+    var opacity = isDeleted ? 1 : 0.3;
+    $textbox.fadeTo(400, opacity).data("isDeleted", !isDeleted).toggleClass("deleted");
+    $this.find("i").toggleClass("icon-trash icon-undo");
+
+    // make sure they can't delete the last box.
+    var commentTemplatesNotDeleted = $("#comment-template-list").find("input[type=text]").not(".deleted");
+    var opacityForRemoveButton = commentTemplatesNotDeleted.length == 1 ? 0.3 : 1
+    commentTemplatesNotDeleted.closest(".input-append").find(".remove-template").fadeTo(400, opacityForRemoveButton).prop("disabled", commentTemplatesNotDeleted.length == 1);
+  });
+
   $(".customize-comments").on('click', function(evt) {
     evt.preventDefault();
-    var data = {
-      templates : commentTemplates
-    }
-
-    var templateListHtml = Mustache.to_html(commentTemplateListTemplate, data);
-    var $templateListHtml = $(templateListHtml);
-
-    if (commentTemplates.length == 1) {
-      $templateListHtml.find(".remove-template").addClass("disabled").prop("disabled", true);
-    }
-
-    // hide/show the reset button
-    $templateListHtml.find("input[type=text]").on("keyup", function() {
-      var $this = $(this);
-      var originalValue = $this.attr("data-original");
-      var currentValue = $this.val();
-      var $resetButton = $this.closest(".input-append").find(".reset-template");
-      if (originalValue !== currentValue) {
-        $resetButton.show();
-        $resetButton.animate({width: '28px'}, 100);
-      } else {
-        $resetButton.animate({width: '0'}, 100, "swing", function() {
-          $resetButton.hide();
-        });
-      }
-    });
-
-    //click handler for reset-button
-    $templateListHtml.find(".reset-template").on('click', function() {
-      var $this = $(this);
-      var $textBox = $this.closest(".input-append").find("input");
-      var originalValue = $textBox.attr("data-original");
-      $textBox.val(originalValue).trigger('keyup');
-    });
-
-    //click handler for remove/undo button
-    $templateListHtml.find(".remove-template").on('click', function() {
-      var $this = $(this);
-      var $containerDiv = $(this).closest(".edit-comment-template");
-      var $textbox = $containerDiv.find("input");
-      var isDeleted = $textbox.data("isDeleted") || false;
-      var opacity = isDeleted ? 1 : 0.3;
-      $textbox.fadeTo(400, opacity).data("isDeleted", !isDeleted).toggleClass("deleted");
-      $this.find("i").toggleClass("icon-trash icon-undo");      
-
-      // make sure they can't delete the last box.
-      var commentTemplatesNotDeleted = $("#comment-template-list").find("input[type=text]").not(".deleted");
-      var opacityForRemoveButton = commentTemplatesNotDeleted.length == 1 ? 0.3 : 1
-      commentTemplatesNotDeleted.closest(".input-append").find(".remove-template").fadeTo(400, opacityForRemoveButton).prop("disabled", commentTemplatesNotDeleted.length == 1);
-    });
-
-    $("#comment-template-list").append($templateListHtml);
+    initCommentTemplateList(commentTemplates);
 
     transitionBlock(".posts-view", ".customize-comments-view", function() {
       $('html, body').animate({
@@ -653,23 +672,27 @@ $(function () {
       }
     });
     //TODO: Update to local storage, but make sure you add a reset to default button first.
-    commentTemplates = newTemplateList;
-    $.each(finalPostList, function() {
-      if (this['tbh-data'].needsComment) {
-        //TODO: NEED TO UPDATE OLD COMMENTS THAT HAVE CHANGED TO THEIR NEW ONE.
-        var currentTemplate = this['tbh-data']['comment-template'];
-        if (quickLookupMap[currentTemplate] !== true) {
-          //no longer exists, need to update
-          // console.log("Comment template",currentTemplate,"no longer exists. Updating post",this.id);
-          var comment = updateCommentTemplateForPost(this);
-          $("#" + this.id).find(".comment-value").text(comment);
-        } 
-      }
-    });
+    var listHasChanged = ($(commentTemplates).not(newTemplateList).length != 0 || $(newTemplateList).not(commentTemplates).length != 0);
+
+    if (listHasChanged) {
+      commentTemplates = newTemplateList;
+      addPostsToPage(finalPostList);
+    }
+
     leaveCustomizeCommentsView();
   });
 
-  //TODO Button for adding new one - have it automatically appear? Have an icon?
+  //restore default comment template click handler
+  $(".customize-comments-restore-defaults").on("click", function () {
+    commentTemplates = defaultCommentTemplates;
+    initCommentTemplateList(commentTemplates);
+  });
+
+  //add template button handler
+  $(".customize-comments-add-template").on("click", function() {
+    var $commentTemplateHtml = createCommentTemplateListHtml(['']);
+    $("#comment-template-list").append($commentTemplateHtml);
+  });
 
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
