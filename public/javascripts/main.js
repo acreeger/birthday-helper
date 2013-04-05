@@ -594,7 +594,7 @@ $(function () {
   var $customizeCommentsContainer = $(".customize-comments-view");
 
   // hide/show the reset-comment-template button
-  $customizeCommentsContainer.on("keyup", "input[type=text]", function() {
+  $customizeCommentsContainer.on("keyup change", "input[type=text]", function() {
     var $this = $(this);
     var originalValue = $this.attr("data-original");
     var currentValue = $this.val();
@@ -625,6 +625,7 @@ $(function () {
     var isDeleted = $textbox.data("isDeleted") || false;
     var opacity = isDeleted ? 1 : 0.3;
     $textbox.fadeTo(400, opacity).data("isDeleted", !isDeleted).toggleClass("deleted");
+    $textbox.prop("disabled", !isDeleted);
     $this.find("i").toggleClass("icon-trash icon-undo");
 
     // make sure they can't delete the last box.
