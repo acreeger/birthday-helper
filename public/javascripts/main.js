@@ -141,11 +141,6 @@ var commentTemplateListTemplate = '\
 {{/templates}}\
 '
 
-var corrections = {
-  "George Shan Lyons" : "Shan",
-  "Helen Zipora Creeger" : "smell"
-}
-
 function yankFirstName(user) {
   var nickname = getNickname(user.id);
   if (nickname) {
