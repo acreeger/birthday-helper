@@ -3,11 +3,27 @@ var currentFacebookId = null;
 
 var finalPostList = null;
 var finalPostMap = {};
-var disabledLikes = initLocalStorageMap("disabledLikes");
-var disabledComments = initLocalStorageMap("disabledComments");
-var peopleInfo = initLocalStorageMap("peopleInfo");
+var disabledLikes = initLocalStorageItem("disabledLikes");
+var disabledComments = initLocalStorageItem("disabledComments");
+var peopleInfo = initLocalStorageItem("peopleInfo");
 
-function initLocalStorageMap(key, defaultVal) {
+var defaultCommentTemplates = [
+  "Thank you so much {{name}}!",
+  "Thank you so much {{name}}!!",
+  "Thank you so much {{name}} :-)",
+  "Cheers {{name}}!",
+  "Cheers {{name}}!!",
+  "Thank you {{name}}!",
+  "Thank you {{name}}! :-)",
+  "Muchos gracias {{name}}!",
+  "Muchos gracias {{name}}!!",
+  "{{name}}, you rock. Thank you!",
+  "Thanks {{name}}!",
+  "Thanks {{name}}!!"
+];
+var commentTemplates = initLocalStorageItem("commentTemplates", defaultCommentTemplates);
+
+function initLocalStorageItem(key, defaultVal) {
   var itemFromStorage = window.localStorage.getItem(key);
   if (itemFromStorage) {
     return JSON.parse(itemFromStorage)
@@ -42,6 +58,11 @@ function updateDisabledLikes(postId, value) {
 function updateDisabledComments(postId, value) {
   disabledComments[postId] = value;
   updateLocalStorageMap('disabledComments', disabledComments);
+}
+
+function updateCommentTemplates(newCommentTemplates) {
+  commentTemplates = newCommentTemplates;
+  updateLocalStorageMap('commentTemplates', newCommentTemplates);
 }
 
 //peopleInfo
@@ -119,23 +140,6 @@ var commentTemplateListTemplate = '\
 </div>\
 {{/templates}}\
 '
-
-var defaultCommentTemplates = [
-  "Thank you so much {{name}}!",
-  "Thank you so much {{name}}!!",
-  "Thank you so much {{name}} :-)",
-  "Cheers {{name}}!",
-  "Cheers {{name}}!!",
-  "Thank you {{name}}!",
-  "Thank you {{name}}! :-)",
-  "Muchos gracias {{name}}!",
-  "Muchos gracias {{name}}!!",
-  "{{name}}, you rock. Thank you!",
-  "Thanks {{name}}!",
-  "Thanks {{name}}!!"
-];
-
-var commentTemplates = defaultCommentTemplates;
 
 var corrections = {
   "George Shan Lyons" : "Shan",
@@ -658,24 +662,19 @@ $(function () {
 
   //save handler
   $(".customize-comments-save").on("click", function(){
-    //iterate through all the textboxes
     var templateListContainer = $("#comment-template-list");
     var textboxes = $(templateListContainer.find("input[type=text]").not(".deleted"));
     var newTemplateList = [];
-    var quickLookupMap = {}
     textboxes.each(function() {
       var template = $.trim($(this).val())
       if (template !== ""){
         newTemplateList.push(template);
-        quickLookupMap[template] = true;
-        //TODO: Keep track of changes here        
       }
     });
-    //TODO: Update to local storage, but make sure you add a reset to default button first.
     var listHasChanged = ($(commentTemplates).not(newTemplateList).length != 0 || $(newTemplateList).not(commentTemplates).length != 0);
 
     if (listHasChanged) {
-      commentTemplates = newTemplateList;
+      updateCommentTemplates(newTemplateList);
       addPostsToPage(finalPostList);
     }
 
@@ -684,8 +683,7 @@ $(function () {
 
   //restore default comment template click handler
   $(".customize-comments-restore-defaults").on("click", function () {
-    commentTemplates = defaultCommentTemplates;
-    initCommentTemplateList(commentTemplates);
+    initCommentTemplateList(defaultCommentTemplates);
   });
 
   //add template button handler
