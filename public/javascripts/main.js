@@ -483,7 +483,6 @@ window.fbAsyncInit = function() {
  }(document));
 
 function doCommentsAndLikes(doComments) {
-  //TODO: iterate each post
   var doneMap = {};
   var count = 0
   var kState = "at-least-one-finished"
