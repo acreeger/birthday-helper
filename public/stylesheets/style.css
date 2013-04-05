@@ -62,6 +62,14 @@
 	margin-bottom: 0;
 }
 
+.icon-ban-circle {
+	color: black;
+}
+
+.icon-ban-circle:hover {
+	text-decoration: none;
+}
+
 /*Editing nickname*/
 .postRow.editing-nickname .nickname-button {
 	display: none;
@@ -116,13 +124,14 @@
 #comment-template-list {
 	margin-top:10px;
 }
+
 .reset-template {
 	display: none;
 	width: 0px;
 	/*opacity: 0.3;*/
 }
 
- .edit-comment-template input {
+.edit-comment-template input {
 	height: 0.85em;
 	width: 15em;
 }
