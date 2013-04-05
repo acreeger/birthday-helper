@@ -31,30 +31,56 @@ block content
             img(src="images/login-button.png")
           | to continue - we won't touch your timeline until you ask us to.
     #logged-in
-      p#getting-birthday-posts Fetching your birthday posts now, please wait...
+      p#getting-birthday-posts Fetching your birthday posts now, please wait...&nbsp;
+        i.icon-spinner.icon-spin
       .got-no-birthday-posts
         p You have no birthday posts. Come back on your birthday. In the mean time, here's some Family Guy.
         div
           iframe(width="640",height="360",src="http://www.youtube.com/embed/zIom3LSbB0I?feature=player_detailpage",frameborder="0",allowfullscreen)
-      p.got-birthday-posts Here are your birthday posts...
-        span#summary
       .got-birthday-posts
-        p Click the button to perform the actions listed below each post. If you don't like something, click the &nbsp;
-          i.icon-ban-circle
-          | &nbsp; icon to stop that action happening.
-          br
-          span.opacity-please Posts that look like this don't need any comments or likes.
-          .row
-            .span12.call-to-action-row
-              button.do-comments-and-likes.btn.btn-primary Add comments and likes
-              button.do-likes.btn.btn-info Like the posts, but don't add any comments
+        .customize-comments-view
           .row
             .span12
-              #birthday-posts.container.table
-          .row
+              strong Customize Comment Templates
+              p Not happy with the comments we made for you? Not a problem, you can change them here...
+          .row            
             .span12.call-to-action-row
-              button.do-comments-and-likes.btn.btn-primary Add comments and likes
-              button.do-likes.btn.btn-info Like the posts, but don't add any comments
+              button.customize-comments-save.btn.btn-primary Save
+              button.customize-comments-cancel.btn Cancel
+              button.customize-comments-restore-defaults.btn.btn-link Restore defaults
+          .row
+            .span12
+              #comment-template-list
+          .row
+            .span12
+              button.customize-comments-add-template.btn
+                i.icon-large.icon-plus
+        .posts-view
+          p Here are your birthday posts...
+              span#summary              
+          p Click the button to perform the actions listed below each post. If you don't like something, click the &nbsp;
+            i.icon-ban-circle
+            | &nbsp; icon to stop that action happening.
+            br
+            span.opacity-please Posts that look like this don't need any comments or likes.
+            .row
+              .span12.call-to-action-row
+                button.do-comments-and-likes.btn.btn-primary Add comments and likes
+                button.do-likes.btn.btn-info Like the posts, but don't add any comments
+                .btn-group
+                  button.more-options.btn.dropdown-toggle(data-toggle="dropdown")
+                    | Customize...&nbsp;
+                    span.caret
+                  ul.dropdown-menu
+                    li
+                      a.customize-comments(href="#") ...comments
+            .row
+              .span12
+                #birthday-posts.container.table
+            .row
+              .span12.call-to-action-row
+                button.do-comments-and-likes.btn.btn-primary Add comments and likes
+                button.do-likes.btn.btn-info Like the posts, but don't add any comments
 
 block late-scripts
   script(src='javascripts/main.js')
