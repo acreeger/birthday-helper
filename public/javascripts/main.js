@@ -162,7 +162,7 @@ function chooseRandomTemplate() {
 
 function isFBUserInCommentsOrLikesInfo(commentsOrLikes, userId) {
   var result = false;
-  if (commentsOrLikes && commentsOrLikes.count > 0) {
+  if (commentsOrLikes && commentsOrLikes.data && commentsOrLikes.data.length > 0) {
     for(var i = 0;i<commentsOrLikes.data.length; i++) {
       var item = commentsOrLikes.data[i];
       if (item.from && item.from.id == userId) {
