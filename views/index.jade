@@ -16,7 +16,7 @@ block content
       h1.span12.logo= title
     .row
       p.span12
-        strong Manage the onslaught of birthday posts on Facebook.
+        //- strong Manage the onslaught of birthday posts on Facebook.
     .row.visible-desktop.visible-tablet.hidden-phone
       .span12.fb-like(data-href="http://www.thebirthdayhelper.com/",data-send="true", data-width="450", data-show-faces="false")
     .row.hidden-desktop.hidden-tablet.visible-phone
@@ -24,7 +24,11 @@ block content
     #not-logged-in
       .row
         .span6
-          p This app helps you see a list of all your birthday posts, automatically like and generate personalized comments for them. It will save you hours on your birthday.
+          p
+            h3 Save hours on your birthday.
+            h4 See birthday posts from your friends
+            h4 Automatically like them
+            h4 Generate personalized comments for them.
       .row
         .span12
           a#fb-login(href="#")
@@ -58,11 +62,11 @@ block content
         .posts-view
           p Here are your birthday posts...
               span#summary              
-          p Click the button to perform the actions listed below each post. If you don't like something, click the &nbsp;
+          p Click one of the buttons to perform the actions that we've listed below each post. If you don't like something, click the &nbsp;
             i.icon-ban-circle
-            | &nbsp; icon to stop that action happening.
+            | &nbsp; icon to stop that action from happening.
             br
-            span.opacity-please Posts that look like this don't need any comments or likes.
+            span.opacity-please If a post looks like this, you've already liked and commented on it. Nicely done.
             .row
               .span12.call-to-action-row
                 button.do-comments-and-likes.btn.btn-primary Add comments and likes
