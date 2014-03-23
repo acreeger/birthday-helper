@@ -1,3 +1,6 @@
+if (typeof window.console === "undefined") window.console = {};
+if (typeof window.console.log === "undefined" || !window.console.log) window.console.log = function() {};
+
 var pageReady = false;
 var currentFacebookId = null;
 
@@ -125,8 +128,8 @@ var template = '\
     <br>{{message}}\
     {{#needsSomething}}<br>\
     <ul>\
-      {{#needsLike}}<li class="likeAction">Going to like this post! <a title="Don\'t like this post" href="#" class="disableLike disableAction"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
-      {{#needsComment}}<li class="commentAction">Going to add a comment: \'<span class="comment-value">{{comment}}</span>\' <a title="Don\'t post this comment" href="#" class="disableComment disableAction"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
+      {{#needsLike}}<li class="likeAction">Like this post! <a title="Don\'t like this post" href="#" class="disableLike disableAction"><i class="icon-ban-circle"></i></a></li>{{/needsLike}}\
+      {{#needsComment}}<li class="commentAction">Add a comment: \'<span class="comment-value">{{comment}}</span>\' <a title="Don\'t post this comment" href="#" class="disableComment disableAction"><i class="icon-ban-circle"></i></a></li>{{/needsComment}}\
     <ul>\
     {{/needsSomething}}\
   </div>\
@@ -386,12 +389,12 @@ function getBirthdayPostsOnWall(response, callback) {
     var posts = response.data;
     var birthdayPosts = $.grep(posts, function(post, i) {
       try {
-        if (post.message && post.to && post.to.data && post.to.data.length > 0 && post.to.data[0].id === currentFacebookId && post.from.id !== currentFacebookId) {
+        if (post.message && post.to && post.to.data && post.to.data.length > 0 && post.to.data[post.to.data.length - 1].id === currentFacebookId && post.from.id !== currentFacebookId) {
           var from = post.from.name;
           var log = false;
           var message = post.message;
           if (log) console.log("Processing message: '", message.toLowerCase(), "' from", from); 
-          var filters = ['happy','birthday','bday','feliz','wishes', 'hbty'];
+          var filters = ['happy','birthday','bday','feliz','wishes', 'hbty', 'hbd', 'great day'];
           for(var j = 0; j<filters.length; j++) {
             var filter = filters[j];
             if (log) {console.log("Processing filter:", filter)}
@@ -436,6 +439,10 @@ function showLoginButton() {
 
 function isLocalEnv() {
   return window.location.hostname.indexOf('local.birthdayhelper.com')  > -1; 
+}
+
+function isTestMode() {
+  return window.location.search.indexOf('test=true') > -1;
 }
 
 window.fbAsyncInit = function() {
@@ -501,54 +508,60 @@ function doCommentsAndLikes(doComments) {
       var baseUrl = postId + "/";
       if (doComments & tbhData.needsComment && !isCommentDisabledForPost(postId)) {
         var comment = tbhData.comment;
-        console.log("About to post comment:", comment, "on post",post.message)
         var url = baseUrl + "comments"
         var data = {message : comment};
-        FB.api(url, 'post', data, function(response) {
-          if (!response || response.error) {
-            if (!response) {
-              console.log("Failed to get response object when commenting on post", postId, "from", post.from.name);
+        if (isTestMode()) {
+          console.log("TEST MODE: Would have posted comment '%s' on post '%s'",data.message,post.message);
+        } else {
+          FB.api(url, 'post', data, function(response) {
+            if (!response || response.error) {
+              if (!response) {
+                console.log("Failed to get response object when commenting on post", postId, "from", post.from.name);
+              } else {
+                console.log("Got error when commenting on post", postId, "from", post.from.name, ":", response.error);
+              }
+              $("#" + postId).css("color","red");
             } else {
-              console.log("Got error when commenting on post", postId, "from", post.from.name, ":", response.error);
+              if (!neededLike || doneMap[postId] == kState) {
+                //complete
+                markPostRowAsComplete($("#" + postId));
+              }
+              doneMap[postId] = kState;
+              tbhData.needsComment = false;
             }
-            $("#" + postId).css("color","red")            
-          } else {
-            if (!neededLike || doneMap[postId] == kState) {
-              //complete
-              markPostRowAsComplete($("#" + postId));
-            }
-            doneMap[postId] = kState;
-            tbhData.needsComment = false;
-          }
-        })
+          });
+        }
       }
       if (tbhData.needsLike && !isLikeDisabledForPost(postId)) {
-        console.log("About to like post:", post.message)
         var url = baseUrl + "likes"
         //Start callback
-        FB.api(url, 'post', function(response) {
-          if (!response || response.error) {
-            if (!response) {
-              console.log("Failed to get response object when liking post", postId, "from", post.from.name);
+        if (isTestMode()) {
+          console.log("TEST MODE: About to like post: '%s'", post.message)
+        } else {
+          FB.api(url, 'post', function(response) {
+            if (!response || response.error) {
+              if (!response) {
+                console.log("Failed to get response object when liking post", postId, "from", post.from.name);
+              } else {
+                console.log("Got error when liking post", postId, "from", post.from.name, ":", response.error);
+              }
+              $("#" + postId).css("color","red")
+            } else if(!doComments && neededComment) {
+              //not doing comments, and it needed one. Hide the 'ban icon' and gray the like action.
+              tbhData.needsLike = false;
+              var $postRow = $("#" + postId);
+              $postRow.find(".disableLike").hide();
+              $postRow.find(".likeAction").fadeTo(400, 0.3);
             } else {
-              console.log("Got error when liking post", postId, "from", post.from.name, ":", response.error);
-            }            
-            $("#" + postId).css("color","red")                        
-          } else if(!doComments && neededComment) {
-            //not doing comments, and it needed one. Hide the 'ban icon' and gray the like action.
-            tbhData.needsLike = false;
-            var $postRow = $("#" + postId);
-            $postRow.find(".disableLike").hide();
-            $postRow.find(".likeAction").fadeTo(400, 0.3);
-          } else {
-            if (!neededComment || doneMap[postId] == kState) {
-              //complete
-              markPostRowAsComplete($("#" + postId));
+              if (!neededComment || doneMap[postId] == kState) {
+                //complete
+                markPostRowAsComplete($("#" + postId));
+              }
+              doneMap[postId] = kState;
+              tbhData.needsLike = false;
             }
-            doneMap[postId] = kState;
-            tbhData.needsLike = false;
-          }
-        });
+          });
+        }
       }
     }
   })
