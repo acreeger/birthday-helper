@@ -322,6 +322,7 @@ function loginCompleted(response) {
         if (post['tbh-data'].needsComment) {
           var comment = createCommentForPost(post);
           $postRow.find(".comment-value").text(comment);
+          post['tbh-data'].comment = comment;
         }
     }
     var container = $("#birthday-posts");
