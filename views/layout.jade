@@ -1,27 +1,33 @@
 doctype html
 html(lang="en")
   head
+    //- Currently only set in index.js, not everywhere
+    //-
+      if isProduction
+        script.
+          var _gaq = _gaq   || [];
+          _gaq.push(['_setAccount', 'UA-266838-4']);
+          _gaq.push(['_trackPageview']);
+
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
     title= title
     link(rel='stylesheet', media='screen', href='/stylesheets/bootstrap.min.css')
-    link(rel='stylesheet', media='screen', href='/stylesheets/bootstrap-responsive.min.css') 
+    link(rel='stylesheet', media='screen', href='/stylesheets/bootstrap-responsive.min.css')
     link(rel='stylesheet', media='screen', href='/stylesheets/style.css')
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     block head
+    if isProduction
+      script.
+        window.analytics=window.analytics||[],window.analytics.methods=["identify","group","track","page","pageview","alias","ready","on","once","off","trackLink","trackForm","trackClick","trackSubmit"],window.analytics.factory=function(t){return function(){var a=Array.prototype.slice.call(arguments);return a.unshift(t),window.analytics.push(a),window.analytics}};for(var i=0;i<window.analytics.methods.length;i++){var key=window.analytics.methods[i];window.analytics[key]=window.analytics.factory(key)}window.analytics.load=function(t){if(!document.getElementById("analytics-js")){var a=document.createElement("script");a.type="text/javascript",a.id="analytics-js",a.async=!0,a.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n)}},window.analytics.SNIPPET_VERSION="2.0.9",
+        window.analytics.load("EkReItfCu9");
+        window.analytics.page();
   body
     block content
     script(src='http://code.jquery.com/jquery.min.js')
     script(src='javascripts/bootstrap.min.js')
-    //- Currently only set in index.js, not everywhere
-    if isProduction
-      script.
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-266838-4']);
-        _gaq.push(['_trackPageview']);
-
-        (function() {
-          var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-          ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
-          var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
 
     block late-scripts

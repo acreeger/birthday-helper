@@ -77,7 +77,7 @@ function setNickname(userId, newValue) {
     }
   } else {
     personInfo = personInfo || {};
-    personInfo['nickname'] = newValue 
+    personInfo['nickname'] = newValue
   }
   if (personInfo) {
     peopleInfo[userId] = personInfo;
@@ -102,12 +102,12 @@ function login(callback) {
     FB.login(function(response) {
         if (response.authResponse) {
             //console.log("FB User logged in. Response:",response);
-            trackEvent('Facebook', 'Login', 'completed');
-            callback(response);
+            trackAnalyticsEvent('Facebook login completed');
+            callback(response, false);
         } else {
-          trackEvent('Facebook', 'Login', 'cancelled');            // cancelled
+          trackAnalyticsEvent('Facebook login cancelled');
         }
-    }, {scope: 'read_stream, publish_stream'});
+    }, {scope: 'read_stream, publish_stream, email'});
 }
 
 var template = '\
@@ -276,8 +276,19 @@ function addPostsToPage(posts) {
   });
 }
 
-function loginCompleted(response) {
+function loginCompleted(response, remembered) {
   currentFacebookId = response.authResponse.userID;
+  //TODO: Grab name, email
+  FB.api("/me",{fields:"name,email"}, function(response) {
+    if (response && !response.error) {
+      var traits = {
+        name: response.name,
+        email: response.email
+      }
+      identifyAnalyticsUser(currentFacebookId, traits)
+    }
+  });
+  trackAnalyticsEvent("User logged in", {remembered: !!remembered})
   $("#not-logged-in").fadeOut('fast', function() {
     $("#logged-in").fadeIn('fast');
   });
@@ -287,15 +298,17 @@ function loginCompleted(response) {
     // console.log("Got posts:",$.map(posts,function(post, i){return post.message}));
     if (posts.length === 0) {
       $("#getting-birthday-posts").fadeOut(function() {
-        $(".got-no-birthday-posts").fadeIn(); 
+        $(".got-no-birthday-posts").fadeIn();
+        trackAnalyticsEvent("User had no birthday posts")
       });
     } else {
+      trackAnalyticsEvent("User had some birthday posts", {"number_birthday_posts": posts.length})
       var summary = "You have " + posts.length + " of them."
       $("#getting-birthday-posts").fadeOut(function() {
         $(".do-comments-and-likes").show();
         $(".got-birthday-posts").fadeIn();
         $("#summary").text(summary);
-      });          
+      });
     }
     addPostsToPage(posts);
 
@@ -307,7 +320,7 @@ function loginCompleted(response) {
       var newValue = !existingValue;
       setter(postId, newValue)
       var opacity = newValue ? 0.3 : 1.0
-      $target.closest("li").fadeTo(400,opacity)        
+      $target.closest("li").fadeTo(400,opacity)
     }
 
     //TODO: Use a context to make this more efficient.
@@ -379,7 +392,7 @@ function loginCompleted(response) {
       $textbox.focus()
     })
 
-    finalPostList = posts;    
+    finalPostList = posts;
   });
 }
 
@@ -414,7 +427,7 @@ function getBirthdayPostsOnWall(response, callback) {
       }
     });
     console.log("Got",birthdayPosts.length, 'birthday posts from a total of', posts.length,'posts');
-    callback(birthdayPosts);   
+    callback(birthdayPosts);
   });
 }
 
@@ -449,13 +462,12 @@ function isTestMode() {
 window.fbAsyncInit = function() {
   var isLocal = isLocalEnv();
   var appId = isLocal ? '525100497552814' : '495905673807221'
-  var channelUrl = isLocal ? '//local.birthdayhelper.com/channel.html' : '//shrouded-hollows-1864.herokuapp.com/channel.html'
   FB.init({
     appId      : appId,
-    channelUrl : channelUrl,
     status     : true, // check login status
     cookie     : true, // enable cookies to allow the server to access the session
-    xfbml      : true  // parse XFBML
+    xfbml      : true,  // parse XFBML
+    version    : 'v2.1'
   });
 
   fbReady = true;
@@ -463,9 +475,9 @@ window.fbAsyncInit = function() {
   FB.getLoginStatus(function(response) {
     if (response.status === 'connected') {
       console.log("FB User already logged in. Response:",response);
-      hasPermissions(['read_stream','publish_stream'], function(result) {
+      hasPermissions(['read_stream','publish_stream','email'], function(result) {
         if (result) {
-          loginCompleted(response);
+          loginCompleted(response, true);
         } else {
           showLoginButton();
         }
@@ -482,13 +494,13 @@ window.fbAsyncInit = function() {
 };
 
 // Load the SDK Asynchronously
-(function(d){
-  var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+(function(d, s, id){
+  var js, fjs = d.getElementsByTagName(s)[0];
   if (d.getElementById(id)) {return;}
-  js = d.createElement('script'); js.id = id; js.async = true;
-  js.src = "//connect.facebook.net/en_US/all.js";
-  ref.parentNode.insertBefore(js, ref);
- }(document));
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
 
 function doCommentsAndLikes(doComments) {
   var doneMap = {};
@@ -568,10 +580,50 @@ function doCommentsAndLikes(doComments) {
   })
 }
 
-function trackEvent(category,action,label) {
-  if (!isLocalEnv() && _gaq) {
-    _gaq.push(['_trackEvent', category, action, label]);
+function ensureKiss(callback) {
+  if (!isLocalEnv() && _kmq) {
+    callback(_kmq);
   }
+}
+
+function ensureMixPanel(callback) {
+  if (!isLocalEnv() && mixpanel) {
+    callback(mixpanel);
+  }
+}
+
+function ensureAnalytics(callback) {
+  if (!isLocalEnv() && analytics) {
+    callback(analytics);
+  }
+}
+
+function trackAnalyticsEvent(name, props) {
+  props = props || {};
+  // ensureKiss(function (kiss){
+  //   kiss.push(['record', name, props])
+  // });
+  // ensureMixPanel(function(mixpanel) {
+  //   mixpanel.track(name, props);
+  // });
+  ensureAnalytics(function (analytics) {
+    analytics.track(name, props)
+  });
+}
+
+function identifyAnalyticsUser(userId, traits) {
+  // ensureKiss(function (kiss) {
+  //   kiss.push(['identify', userId.toString()]);
+  // });
+  // ensureMixPanel(function(mixpanel) {
+  //   mixpanel.register({"fb_id":userId});
+  //   mixpanel.identify(userId);
+  // }
+
+  //TODO: Name
+  ensureAnalytics(function (analytics) {
+    analytics.identify(userId, traits);
+  });
 }
 
 function transitionBlock(from, to, callback) {
@@ -603,8 +655,8 @@ function initCommentTemplateList(commentTemplates) {
 
 $(function () {
   pageReady = true;
-  $(".do-comments-and-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Comments And Likes');doCommentsAndLikes(true)});
-  $(".do-likes").on('click', function() {trackEvent('Wall Interaction', 'Do Likes Only');doCommentsAndLikes(false)});
+  $(".do-comments-and-likes").on('click', function() {trackAnalyticsEvent('Actioned comments and likes');doCommentsAndLikes(true)});
+  $(".do-likes").on('click', function() {trackAnalyticsEvent('Actioned likes');doCommentsAndLikes(false)});
   var $customizeCommentsContainer = $(".customize-comments-view");
 
   // hide/show the reset-comment-template button
@@ -659,14 +711,14 @@ $(function () {
     });
   });
 
-  function leaveCustomizeCommentsView() {      
+  function leaveCustomizeCommentsView() {
     transitionBlock(".customize-comments-view", ".posts-view", function() {
       $("#comment-template-list").empty();
     });
   }
 
   $(".customize-comments-cancel").on("click", function() {
-    leaveCustomizeCommentsView();  
+    leaveCustomizeCommentsView();
   });
 
   //save handler
@@ -703,7 +755,7 @@ $(function () {
 
   $("#fb-login").on('click', function(evt) {
     evt.preventDefault();
-    trackEvent('Facebook', 'Login', 'started');
+    trackAnalyticsEvent('Facebook login started');
     login(loginCompleted);
   });
 });
