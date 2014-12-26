@@ -98,6 +98,8 @@ function getNickname(userId) {
   return result;
 }
 
+var PERMS = ['read_stream', 'email', 'publish_actions']
+
 function login(callback) {
     FB.login(function(response) {
         if (response.authResponse) {
@@ -107,7 +109,7 @@ function login(callback) {
         } else {
           trackAnalyticsEvent('Facebook login cancelled');
         }
-    }, {scope: 'read_stream, publish_stream, email'});
+    }, {scope: PERMS.join(',')});
 }
 
 var template = '\
@@ -408,7 +410,7 @@ function getBirthdayPostsOnWall(response, callback) {
           var log = false;
           var message = post.message;
           if (log) console.log("Processing message: '", message.toLowerCase(), "' from", from); 
-          var filters = ['happy','birthday','bday','feliz','wishes', 'hbty', 'hbd', 'great day'];
+          var filters = ['happy','birthday','bday','feliz','wishes', 'hbty', 'hbd', 'great day','wonderful day', 'awesome day', 'fantastic day'];
           for(var j = 0; j<filters.length; j++) {
             var filter = filters[j];
             if (log) {console.log("Processing filter:", filter)}
@@ -433,11 +435,14 @@ function getBirthdayPostsOnWall(response, callback) {
 
 function hasPermissions(permissions, callback) {
   FB.api('/me/permissions', function (response) {
-    console.log('Permission response', response);
-    var perms = response.data[0];
+    var perms = response.data;
+    var permsObj = {};
+    $.each(perms, function(i, fb_perm) {
+      permsObj[this.permission] = this.status === "granted";
+    });
     var result = true;
     $.each(permissions,function(i, permission) {
-      if (perms[permission]) {
+      if (permsObj[permission] === true) {
         result = result && true;
       } else {
         result = false;
@@ -452,7 +457,7 @@ function showLoginButton() {
 }
 
 function isLocalEnv() {
-  return window.location.hostname.indexOf('local.birthdayhelper.com')  > -1; 
+  return window.location.hostname.indexOf('local.thebirthdayhelper.com')  > -1;
 }
 
 function isTestMode() {
@@ -461,7 +466,7 @@ function isTestMode() {
 
 window.fbAsyncInit = function() {
   var isLocal = isLocalEnv();
-  var appId = isLocal ? '525100497552814' : '495905673807221'
+  var appId = isLocal ? '815370921860693' : '495905673807221'
   FB.init({
     appId      : appId,
     status     : true, // check login status
@@ -475,7 +480,7 @@ window.fbAsyncInit = function() {
   FB.getLoginStatus(function(response) {
     if (response.status === 'connected') {
       console.log("FB User already logged in. Response:",response);
-      hasPermissions(['read_stream','publish_stream','email'], function(result) {
+      hasPermissions(PERMS, function(result) {
         if (result) {
           loginCompleted(response, true);
         } else {
@@ -532,6 +537,7 @@ function doCommentsAndLikes(doComments) {
                 console.log("Failed to get response object when commenting on post", postId, "from", post.from.name);
               } else {
                 console.log("Got error when commenting on post", postId, "from", post.from.name, ":", response.error);
+                trackAnalyticsEvent("Error occured",{message:response.error,action:'comment'});
               }
               $("#" + postId).css("color","red");
             } else {
@@ -557,6 +563,7 @@ function doCommentsAndLikes(doComments) {
                 console.log("Failed to get response object when liking post", postId, "from", post.from.name);
               } else {
                 console.log("Got error when liking post", postId, "from", post.from.name, ":", response.error);
+                trackAnalyticsEvent("Error occured",{message:response.error,action:'like'});
               }
               $("#" + postId).css("color","red")
             } else if(!doComments && neededComment) {
@@ -577,23 +584,11 @@ function doCommentsAndLikes(doComments) {
         }
       }
     }
-  })
-}
-
-function ensureKiss(callback) {
-  if (!isLocalEnv() && _kmq) {
-    callback(_kmq);
-  }
-}
-
-function ensureMixPanel(callback) {
-  if (!isLocalEnv() && mixpanel) {
-    callback(mixpanel);
-  }
+  });
 }
 
 function ensureAnalytics(callback) {
-  if (!isLocalEnv() && analytics) {
+  if (analytics) {
     callback(analytics);
   }
 }
